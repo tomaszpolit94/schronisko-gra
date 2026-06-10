@@ -1,0 +1,2118 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🐾 SCHRONISKO — Gra planszowa</title>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --cream:#FFF8EE;--warm:#FFE8C8;--orange:#E8833A;--org2:#F5A55A;
+  --brown:#8B5E3C;--brn2:#5C3D20;--green:#5BAD72;--grn2:#3D8B57;
+  --blue:#4A90C4;--pink:#E87D7D;--yell:#F0C040;--purp:#9B7BC8;
+  --gray:#AAA;--shad:0 4px 20px rgba(92,61,32,.18);--rad:12px
+}
+body{font-family:'Nunito',sans-serif;background:var(--cream);min-height:100vh;overflow-x:hidden}
+.screen{display:none;min-height:100vh}
+.screen.active{display:flex}
+/* SETUP */
+#setup-screen{flex-direction:column;align-items:center;justify-content:center;padding:20px;
+  background:linear-gradient(160deg,#FFF8EE 0%,#FFE8C8 100%)}
+.logo{text-align:center;margin-bottom:22px}
+.logo h1{font-family:'Baloo 2',cursive;font-size:clamp(2rem,7vw,3.8rem);font-weight:800;color:var(--brn2);line-height:1}
+.logo h1 span{color:var(--orange)}
+.logo p{font-size:.85rem;color:var(--brown);font-style:italic;margin-top:4px}
+.setup-card{background:white;border-radius:20px;padding:22px 26px;box-shadow:var(--shad);width:100%;max-width:530px}
+.setup-card h2{font-family:'Baloo 2',cursive;font-size:1.05rem;color:var(--brn2);margin-bottom:12px}
+.preset-row{display:flex;gap:7px;margin-bottom:14px}
+.preset-btn{flex:1;padding:9px 5px;border:2px solid #EEE;border-radius:9px;background:white;
+  font-family:'Nunito',sans-serif;font-size:.78rem;font-weight:700;cursor:pointer;transition:all .2s;color:var(--brn2)}
+.preset-btn:hover,.preset-btn.active{border-color:var(--orange);background:#FFF8EE;color:var(--orange)}
+.player-row{display:flex;align-items:center;gap:8px;margin-bottom:8px;padding:9px 12px;
+  border:2px solid #EEE;border-radius:var(--rad);transition:border-color .2s}
+.player-row.mine{border-color:var(--orange)}
+.player-color{width:26px;height:26px;border-radius:50%;border:3px solid rgba(0,0,0,.1);
+  flex-shrink:0;cursor:pointer;transition:transform .2s}
+.player-color:hover{transform:scale(1.15)}
+.player-name-input{flex:1;border:none;outline:none;font-family:'Nunito',sans-serif;
+  font-size:.9rem;font-weight:700;color:var(--brn2);background:transparent}
+.player-name-input::placeholder{color:#CCC;font-weight:400}
+.type-btns{display:flex;gap:3px}
+.type-btn{padding:3px 9px;border-radius:20px;border:2px solid #DDD;background:white;
+  font-size:.68rem;font-weight:700;cursor:pointer;transition:all .2s;white-space:nowrap}
+.type-btn.sel{background:var(--orange);border-color:var(--orange);color:white}
+.rm-btn{background:none;border:none;cursor:pointer;font-size:1rem;color:#CCC;padding:4px;line-height:1}
+.rm-btn:hover{color:var(--pink)}
+.add-btn{width:100%;padding:9px;border:2px dashed var(--org2);border-radius:var(--rad);
+  background:none;color:var(--orange);font-family:'Nunito',sans-serif;font-size:.85rem;
+  font-weight:700;cursor:pointer;margin-bottom:14px;transition:all .2s}
+.add-btn:hover{background:#FFF0E0}
+.start-btn{width:100%;padding:13px;background:var(--orange);color:white;border:none;
+  border-radius:var(--rad);font-family:'Baloo 2',cursive;font-size:1.2rem;font-weight:700;
+  cursor:pointer;box-shadow:0 4px 14px rgba(232,131,58,.4);transition:all .2s}
+.start-btn:hover{background:var(--brn2);transform:translateY(-2px)}
+/* GAME */
+#game-screen{flex-direction:row;height:100vh;overflow:hidden}
+.sidebar{width:285px;min-width:285px;background:var(--brn2);color:white;
+  display:flex;flex-direction:column;overflow-y:auto;overflow-x:hidden}
+.sb-head{padding:13px 15px 9px;border-bottom:1px solid rgba(255,255,255,.1)}
+.sb-head h2{font-family:'Baloo 2',cursive;font-size:1.25rem;font-weight:800}
+.sb-head h2 span{color:var(--org2)}
+.sb-head p{font-size:.68rem;opacity:.5;margin-top:2px}
+/* Hint */
+.hint-box{margin:9px 11px 0;background:rgba(255,255,255,.09);border-radius:10px;
+  border:1px solid rgba(255,255,255,.13)}
+.hint-head{padding:7px 11px;font-size:.67rem;font-weight:800;text-transform:uppercase;
+  letter-spacing:.8px;opacity:.7;display:flex;align-items:center;gap:5px;cursor:pointer;user-select:none}
+.hint-head::after{content:'▼';font-size:.5rem;margin-left:auto;transition:transform .2s}
+.hint-box.col .hint-head::after{transform:rotate(-90deg)}
+.hint-body{padding:0 11px 9px;font-size:.73rem;line-height:1.5}
+.hint-box.col .hint-body{display:none}
+.hi{padding:3px 0;border-bottom:1px solid rgba(255,255,255,.06);display:flex;gap:5px;align-items:flex-start}
+.hi:last-child{border:none}
+.hi-icon{flex-shrink:0;width:15px;text-align:center;margin-top:1px}
+/* Players */
+.players-list{padding:9px 11px;display:flex;flex-direction:column;gap:6px}
+.pc{background:rgba(255,255,255,.07);border-radius:9px;padding:8px 10px;
+  border:2px solid transparent;transition:all .3s;position:relative}
+.pc.cur{background:rgba(255,255,255,.14);border-color:var(--org2)}
+.pc.cur::before{content:'▶';position:absolute;left:-12px;top:50%;transform:translateY(-50%);
+  color:var(--org2);font-size:.72rem}
+.pc-top{display:flex;align-items:center;gap:6px;margin-bottom:4px}
+.pc-dot{width:19px;height:19px;border-radius:50%;border:2.5px solid rgba(255,255,255,.28);flex-shrink:0}
+.pc-name{font-weight:800;font-size:.82rem;flex:1}
+.pc-pts{font-family:'Baloo 2',cursive;font-size:.9rem;font-weight:700;color:var(--yell)}
+.pc-sn{font-size:.68rem;padding:1px 6px;border-radius:20px;font-weight:700}
+.pc-sn.on{background:var(--yell);color:var(--brn2)}
+.pc-sn.off{background:rgba(255,255,255,.09);opacity:.5}
+.pc-hand{display:flex;flex-wrap:wrap;gap:3px;min-height:17px}
+.chip{font-size:.59rem;padding:2px 6px;background:rgba(255,255,255,.1);border-radius:20px;white-space:nowrap}
+.chip.j{background:var(--purp)}
+.chip.chip-btn{cursor:pointer;border:1px solid rgba(255,255,255,.25);transition:all .15s}
+.chip.chip-btn:hover{background:rgba(255,255,255,.25);transform:scale(1.05)}
+.aopt.not-yet{opacity:.65;cursor:pointer}
+.aopt.not-yet:hover{opacity:.9;border-color:var(--orange);background:#FFF8EE}
+/* Quiz */
+.quiz-opt{display:flex;align-items:center;gap:10px;padding:10px 13px;border:2px solid #DDD;
+  border-radius:10px;background:white;cursor:pointer;font-family:'Nunito',sans-serif;
+  font-size:.88rem;font-weight:600;text-align:left;transition:all .2s;width:100%}
+.quiz-opt:hover:not(:disabled){border-color:var(--orange);background:#FFF8EE}
+.quiz-opt:disabled{cursor:default}
+.quiz-letter{width:26px;height:26px;border-radius:50%;background:#EEE;display:flex;
+  align-items:center;justify-content:center;font-weight:800;font-size:.8rem;
+  flex-shrink:0;transition:background .3s,color .3s;color:#333}
+.quiz-txt{flex:1}
+.pc-animals{margin-top:3px;font-size:.75rem;min-height:14px}
+.pc-skip{font-size:.6rem;background:var(--pink);color:white;padding:1px 7px;
+  border-radius:20px;margin-top:3px;display:inline-block}
+/* Log */
+.sb-log{padding:8px 11px;border-top:1px solid rgba(255,255,255,.07);max-height:170px;overflow-y:auto}
+.sb-log h3{font-size:.63rem;text-transform:uppercase;letter-spacing:1px;opacity:.4;margin-bottom:5px}
+.log-e{font-size:.68rem;line-height:1.42;padding:2px 0;border-bottom:1px solid rgba(255,255,255,.04);opacity:.78}
+.log-e.hl{color:var(--yell);opacity:1;font-weight:700}
+.log-e.bad{color:var(--pink);opacity:1}
+.log-e.good{color:var(--green);opacity:1}
+/* Actions */
+.act-panel{padding:11px;border-top:1px solid rgba(255,255,255,.1)}
+.act-panel h3{font-size:.63rem;text-transform:uppercase;letter-spacing:1px;opacity:.4;margin-bottom:7px}
+.dice{text-align:center;font-size:2.3rem;margin:3px 0;min-height:44px}
+.dice.roll{animation:diceA .45s ease}
+@keyframes diceA{0%,100%{transform:rotate(0)}30%{transform:rotate(-18deg)scale(1.2)}70%{transform:rotate(18deg)scale(1.2)}}
+.abtn{width:100%;padding:10px;border-radius:10px;border:none;font-family:'Nunito',sans-serif;
+  font-size:.88rem;font-weight:800;cursor:pointer;transition:all .2s;margin-bottom:6px}
+.abtn.pri{background:var(--orange);color:white;box-shadow:0 3px 12px rgba(232,131,58,.38)}
+.abtn.pri:hover{background:var(--brn2);transform:translateY(-1px)}
+.abtn.pri:disabled{background:rgba(255,255,255,.13);color:rgba(255,255,255,.32);
+  box-shadow:none;transform:none;cursor:not-allowed}
+.abtn.sec{background:rgba(255,255,255,.08);color:white;border:1px solid rgba(255,255,255,.16)}
+.abtn.sec:hover:not(:disabled){background:rgba(255,255,255,.16)}
+.abtn.sec:disabled{opacity:.26;cursor:not-allowed}
+/* Board */
+.board-area{flex:1;display:flex;flex-direction:column;overflow:hidden;background:var(--cream)}
+.topbar{padding:9px 15px;background:white;border-bottom:2px solid var(--warm);
+  display:flex;align-items:center;gap:10px;flex-shrink:0}
+.round-badge{font-family:'Baloo 2',cursive;font-size:.8rem;font-weight:700;
+  color:var(--brown);background:var(--warm);padding:3px 11px;border-radius:20px}
+.turn-info{font-size:.8rem;font-weight:700;color:var(--brn2);flex:1}
+.phase-badge{font-size:.7rem;padding:3px 10px;border-radius:20px;font-weight:700}
+.ph-roll{background:#FFF0E0;color:var(--orange)}
+.ph-act{background:#E3F2FD;color:var(--blue)}
+.board-scroll{flex:1;overflow:auto;padding:10px 14px;display:flex;align-items:center;justify-content:center}
+.board-wrap{width:100%;max-width:1100px;aspect-ratio:1200/680}
+.board-wrap svg{width:100%;height:100%}
+/* Modal */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.52);z-index:100;
+  align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(3px)}
+.overlay.open{display:flex}
+.modal{background:white;border-radius:20px;padding:22px 22px 18px;max-width:490px;
+  width:100%;box-shadow:0 18px 55px rgba(0,0,0,.28);
+  animation:mIn .3s cubic-bezier(.34,1.56,.64,1);max-height:90vh;overflow-y:auto}
+@keyframes mIn{from{opacity:0;transform:scale(.86)translateY(14px)}to{opacity:1;transform:scale(1)translateY(0)}}
+.m-icon{font-size:2.6rem;text-align:center;margin-bottom:9px}
+.m-title{font-family:'Baloo 2',cursive;font-size:1.35rem;font-weight:800;
+  color:var(--brn2);text-align:center;margin-bottom:5px}
+.m-sub{font-size:.8rem;color:var(--gray);text-align:center;margin-bottom:13px}
+.m-text{font-size:.86rem;color:var(--brn2);line-height:1.6;margin-bottom:13px}
+.card-box{border:2.5px solid;border-radius:11px;padding:13px;margin-bottom:12px;text-align:center}
+.card-box.pos{border-color:var(--blue);background:#EBF4FD}
+.card-box.neg{border-color:var(--pink);background:#FEF0F0}
+.card-box.neu{border-color:var(--yell);background:#FFFBEC}
+.card-box .ci{font-size:2rem;margin-bottom:6px}
+.card-box .cn{font-family:'Baloo 2',cursive;font-size:1.1rem;font-weight:800;color:var(--brn2);margin-bottom:4px}
+.card-box .cd{font-size:.8rem;color:var(--brown);line-height:1.5}
+.card-box .ct{font-size:.58rem;font-weight:800;text-transform:uppercase;letter-spacing:1px;opacity:.5;margin-bottom:4px}
+.fact-box{background:var(--warm);border-radius:10px;padding:11px 13px;margin-bottom:11px;border-left:4px solid var(--orange)}
+.fact-box h4{font-size:.68rem;font-weight:800;color:var(--orange);margin-bottom:3px;text-transform:uppercase;letter-spacing:.5px}
+.fact-box p{font-size:.8rem;color:var(--brn2);line-height:1.5;font-style:italic}
+.m-btns{display:flex;gap:7px;flex-wrap:wrap}
+.mbtn{flex:1;padding:10px;border-radius:10px;border:none;font-family:'Nunito',sans-serif;
+  font-size:.86rem;font-weight:800;cursor:pointer;transition:all .2s;min-width:85px}
+.mbtn.ok{background:var(--orange);color:white;box-shadow:0 3px 10px rgba(232,131,58,.33)}
+.mbtn.ok:hover{background:var(--brn2)}
+.mbtn.ok:disabled{opacity:.38;cursor:not-allowed}
+.mbtn.can{background:#F4F4F4;color:var(--brown)}
+.mbtn.can:hover{background:#EEE}
+.mbtn.go{background:var(--green);color:white}
+.mbtn.go:hover{background:var(--grn2)}
+.agrid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:13px}
+.aopt{border:2px solid #EEE;border-radius:10px;padding:9px 5px;text-align:center;
+  cursor:pointer;transition:all .2s;position:relative}
+.aopt:hover{border-color:var(--orange);background:#FFF8EE}
+.aopt.sel{border-color:var(--orange);background:#FFF0D6}
+.aopt.ok{border-color:var(--green)}
+.aopt.ok:hover{background:#E8F8ED}
+.aopt.dis{opacity:.28;cursor:not-allowed;pointer-events:none}
+.aopt .ck{position:absolute;top:3px;right:3px;width:14px;height:14px;background:var(--green);
+  border-radius:50%;display:none;align-items:center;justify-content:center;font-size:.52rem;color:white}
+.aopt.ok .ck{display:flex}
+.ae{font-size:1.65rem;display:block}
+.an{font-size:.63rem;font-weight:800;color:var(--brn2);margin:3px 0 1px}
+.ap{font-size:.6rem;color:var(--orange);font-weight:700}
+.ar{font-size:.55rem;color:var(--blue);margin-top:2px;line-height:1.3}
+.hand-chips{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px}
+.hchip{padding:5px 10px;border:2px solid #DDD;border-radius:20px;background:white;
+  font-family:'Nunito',sans-serif;font-size:.76rem;font-weight:700;cursor:pointer;transition:all .2s}
+.hchip:hover{border-color:var(--orange)}
+.hchip.sel{background:var(--orange);border-color:var(--orange);color:white}
+.plist{display:flex;flex-direction:column;gap:6px;margin-bottom:11px}
+.pbtn{padding:9px 11px;border:2px solid #EEE;border-radius:9px;background:white;
+  cursor:pointer;display:flex;align-items:center;gap:8px;font-family:'Nunito',sans-serif;transition:border-color .2s}
+.pbtn:hover,.pbtn.sel{border-color:var(--orange);background:#FFF8EE}
+/* End */
+#end-screen{flex-direction:column;align-items:center;justify-content:center;padding:20px;
+  background:linear-gradient(160deg,#FFF8EE 0%,#FFE8C8 100%)}
+.end-card{background:white;border-radius:22px;padding:30px 34px;max-width:510px;
+  width:100%;box-shadow:var(--shad);text-align:center}
+.end-title{font-family:'Baloo 2',cursive;font-size:1.9rem;font-weight:800;color:var(--brn2);margin-bottom:3px}
+.end-sub{font-size:.86rem;color:var(--gray);margin-bottom:22px}
+.end-pod{display:flex;flex-direction:column;gap:8px;margin-bottom:20px}
+.er{display:flex;align-items:center;padding:10px 13px;border-radius:10px;gap:10px;
+  opacity:0;transform:translateX(-16px);transition:all .4s}
+.er.vis{opacity:1;transform:none}
+.er.g{background:#FFF8E1;border:2px solid #F0C040}
+.er.s{background:#FAFAFA;border:2px solid #CCC}
+.er.b{background:#FFF5EE;border:2px solid #D4936C}
+.er.r{background:#F8F8F8;border:2px solid #EEE}
+.e-rank{font-family:'Baloo 2',cursive;font-size:1.25rem;font-weight:800;width:26px}
+.e-dot{width:20px;height:20px;border-radius:50%;flex-shrink:0}
+.e-info{flex:1;text-align:left}
+.e-name{font-weight:800;font-size:.92rem}
+.e-det{font-size:.67rem;color:var(--gray)}
+.e-pts{font-family:'Baloo 2',cursive;font-size:1.05rem;font-weight:800;color:var(--orange)}
+/* Toast */
+.toasts{position:fixed;top:13px;right:13px;z-index:200;display:flex;flex-direction:column;gap:6px;pointer-events:none}
+.toast{background:var(--brn2);color:white;padding:8px 13px;border-radius:9px;font-size:.8rem;
+  font-weight:700;box-shadow:0 4px 13px rgba(0,0,0,.2);max-width:260px;
+  animation:tI .3s ease,tO .3s ease 2.7s forwards}
+.toast.good{background:var(--grn2)}
+.toast.bad{background:var(--pink)}
+.toast.info{background:var(--blue)}
+@keyframes tI{from{opacity:0;transform:translateX(16px)}to{opacity:1;transform:none}}
+@keyframes tO{from{opacity:1}to{opacity:0}}
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-thumb{background:rgba(0,0,0,.18);border-radius:10px}
+@media(max-width:660px){
+  #game-screen{flex-direction:column}
+  .sidebar{width:100%;min-width:unset;height:auto;max-height:38vh}
+}
+/* Lobby online */
+#lobby-screen{flex-direction:column;align-items:center;justify-content:center;padding:20px;
+  background:linear-gradient(160deg,#FFF8EE 0%,#FFE8C8 100%)}
+.lobby-card{background:white;border-radius:20px;padding:26px 30px;max-width:460px;width:100%;box-shadow:var(--shad)}
+.lobby-card h2{font-family:'Baloo 2',cursive;font-size:1.15rem;color:var(--brn2);margin-bottom:14px}
+.lobby-tabs{display:flex;gap:6px;margin-bottom:18px}
+.ltab{flex:1;padding:10px;border:2px solid #EEE;border-radius:10px;background:white;
+  font-family:'Nunito',sans-serif;font-size:.88rem;font-weight:700;cursor:pointer;color:var(--brn2);transition:all .2s}
+.ltab.active{background:var(--orange);border-color:var(--orange);color:white}
+.lobby-section{display:none}.lobby-section.active{display:block}
+.lobby-input{width:100%;padding:11px 14px;border:2px solid #DDD;border-radius:10px;font-family:'Nunito',sans-serif;
+  font-size:1rem;font-weight:700;color:var(--brn2);margin-bottom:10px;outline:none;transition:border .2s}
+.lobby-input:focus{border-color:var(--orange)}
+.room-code-display{background:var(--warm);border-radius:12px;padding:16px;text-align:center;margin-bottom:14px}
+.room-code-display .code{font-family:'Baloo 2',cursive;font-size:2.4rem;font-weight:800;
+  color:var(--orange);letter-spacing:6px;margin-bottom:4px}
+.room-code-display .hint{font-size:.75rem;color:var(--brown)}
+.lobby-status{padding:10px 14px;border-radius:10px;font-size:.82rem;font-weight:700;
+  margin-bottom:12px;text-align:center}
+.lobby-status.waiting{background:#FFF8E1;color:#8B6914;border:1px solid #F0C040}
+.lobby-status.connected{background:#E8F8ED;color:#2D6A4F;border:1px solid #5BAD72}
+.lobby-status.error{background:#FEF0F0;color:#C0392B;border:1px solid #E87D7D}
+.online-badge{position:fixed;top:10px;left:50%;transform:translateX(-50%);
+  background:var(--grn2);color:white;padding:4px 14px;border-radius:20px;
+  font-size:.72rem;font-weight:800;z-index:300;display:none}
+</style>
+<script src="https://cdn.ably.com/lib/ably.min-2.js"></script>
+</head>
+<body>
+<div class="online-badge" id="online-badge">🟢 Online — połączony z kolegą</div>
+
+<!-- SETUP (lokalna gra) -->
+<div id="setup-screen" class="screen active">
+  <div class="logo">
+    <h1>🐾 SCHRO<span>NISKO</span></h1>
+    <p>Gra planszowa • adoptuj zwierzęta ze schroniska!</p>
+  </div>
+  <div class="setup-card">
+    <h2>⚡ Szybki wybór</h2>
+    <div class="preset-row">
+      <button class="preset-btn active" id="pre2" onclick="preset(2)">👥 2 graczy</button>
+      <button class="preset-btn" id="pre3" onclick="preset(3)">👥 3 graczy</button>
+      <button class="preset-btn" id="pre4" onclick="preset(4)">👥 4 graczy</button>
+      <button class="preset-btn" id="preai" onclick="preset('ai')">🤖 Ty vs AI</button>
+    </div>
+    <h2>👥 Gracze</h2>
+    <div id="players-setup"></div>
+    <button class="add-btn" id="add-btn">+ Dodaj gracza (max 5)</button>
+    <div style="display:flex;gap:8px;margin-top:4px">
+      <button class="start-btn" id="start-btn" style="flex:1">🐾 Graj lokalnie</button>
+      <button class="start-btn" id="online-btn" style="flex:1;background:var(--blue)">🌐 Graj online</button>
+    </div>
+  </div>
+</div>
+
+<!-- LOBBY online -->
+<div id="lobby-screen" class="screen">
+  <div class="logo">
+    <h1>🐾 SCHRO<span>NISKO</span></h1>
+    <p>Tryb online — zagraj z kolegą przez internet</p>
+  </div>
+  <div class="lobby-card">
+    <div style="background:#EDF4FF;border-radius:10px;padding:11px 14px;margin-bottom:16px;font-size:.78rem;color:#1A3A6A;line-height:1.6">
+      <strong>Jak to działa?</strong><br>
+      1. Wejdź na <a href="https://ably.com" target="_blank" style="color:var(--blue);font-weight:700">ably.com</a>, załóż darmowe konto<br>
+      2. Dashboard → Apps → API Keys → skopiuj klucz (root key)<br>
+      3. Wklej poniżej i stwórz pokój — wyślij kod koledze
+    </div>
+    <label style="font-size:.78rem;font-weight:700;color:var(--brn2);display:block;margin-bottom:5px">🔑 Klucz API Ably</label>
+    <input class="lobby-input" id="ably-key" placeholder="xxxx.yyyy:zzzzzzzzzzzzzz" style="font-size:.8rem;letter-spacing:.3px;font-family:monospace" value="NGI10A.Zwxsig:Ai9aDe88-kgO53e1CBW8u_DkOH3W3qoWcesjXQzes1s">
+    <div class="lobby-tabs">
+      <button class="ltab active" id="tab-host" onclick="switchLobbyTab('host')">🏠 Stwórz pokój</button>
+      <button class="ltab" id="tab-join" onclick="switchLobbyTab('join')">🔗 Dołącz</button>
+    </div>
+    <div class="lobby-section active" id="sec-host">
+      <label style="font-size:.78rem;font-weight:700;color:var(--brn2);display:block;margin-bottom:5px">👤 Twoje imię</label>
+      <input class="lobby-input" id="host-name" value="Gracz 1" placeholder="Twoje imię">
+      <button class="start-btn" onclick="hostCreateRoom()">🏠 Stwórz pokój</button>
+      <div id="host-room-info" style="display:none;margin-top:12px">
+        <div class="room-code-display">
+          <div class="code" id="host-room-code">????</div>
+          <div class="hint">Podaj ten 4-cyfrowy kod koledze</div>
+        </div>
+        <div class="lobby-status waiting" id="host-status">⏳ Czekam na dołączenie kolegi...</div>
+        <button class="start-btn" id="host-start-btn" style="display:none" onclick="hostStartGame()">🐾 Startujemy!</button>
+      </div>
+    </div>
+    <div class="lobby-section" id="sec-join">
+      <label style="font-size:.78rem;font-weight:700;color:var(--brn2);display:block;margin-bottom:5px">👤 Twoje imię</label>
+      <input class="lobby-input" id="join-name" value="Gracz 2" placeholder="Twoje imię">
+      <label style="font-size:.78rem;font-weight:700;color:var(--brn2);display:block;margin-bottom:5px">🔢 Kod pokoju</label>
+      <input class="lobby-input" id="join-code" placeholder="np. 4829" maxlength="4"
+        style="font-size:2rem;letter-spacing:10px;text-align:center;font-family:'Baloo 2',cursive">
+      <button class="start-btn" onclick="joinRoom()" style="background:var(--blue)">Dołącz 🔗</button>
+      <div class="lobby-status" id="join-status" style="display:none;margin-top:10px"></div>
+    </div>
+    <button onclick="showScreen('setup')" style="width:100%;padding:8px;border:none;background:none;
+      color:var(--gray);font-family:'Nunito',sans-serif;font-size:.8rem;cursor:pointer;margin-top:10px">
+      ← Wróć do gry lokalnej
+    </button>
+  </div>
+</div>
+<div id="game-screen" class="screen">
+  <div class="sidebar">
+    <div class="sb-head">
+      <h2>🐾 <span>Schronisko</span></h2>
+      <p id="sb-round">Runda 1</p>
+    </div>
+    <div class="hint-box" id="hint-box">
+      <div class="hint-head" onclick="toggleHint()">💡 Co teraz zrobić?</div>
+      <div class="hint-body" id="hint-body"></div>
+    </div>
+    <div class="players-list" id="players-list"></div>
+    <div class="sb-log"><h3>Dziennik</h3><div id="log-div"></div></div>
+    <div class="act-panel">
+      <h3>Akcje</h3>
+      <div class="dice" id="dice">🎲</div>
+      <button class="abtn pri" id="roll-btn">🎲 Rzuć kostką</button>
+      <button class="abtn sec" id="adopt-btn" disabled>🐾 Adoptuj zwierzę</button>
+      <button class="abtn sec" id="end-btn" disabled>➡️ Zakończ turę</button>
+    </div>
+  </div>
+  <div class="board-area">
+    <div class="topbar">
+      <span class="round-badge" id="top-round">Runda 1</span>
+      <span class="turn-info" id="top-turn">Czeka...</span>
+      <span class="phase-badge ph-roll" id="top-phase">Rzut</span>
+      <button onclick="showRules()" style="padding:4px 12px;border:1.5px solid var(--orange);border-radius:20px;background:white;color:var(--orange);font-family:'Nunito',sans-serif;font-size:.75rem;font-weight:800;cursor:pointer;white-space:nowrap">📖 Instrukcja</button>
+    </div>
+    <div class="board-scroll">
+      <div class="board-wrap">
+        <svg id="svg" viewBox="0 0 1200 680" xmlns="http://www.w3.org/2000/svg"></svg>
+      </div>
+    </div>
+  </div>
+</div>
+<div id="end-screen" class="screen">
+  <div class="end-card">
+    <div style="font-size:2.8rem;margin-bottom:9px">🏆</div>
+    <div class="end-title">Koniec gry!</div>
+    <div class="end-sub" id="end-sub"></div>
+    <div class="end-pod" id="end-pod"></div>
+    <button class="mbtn ok" onclick="location.reload()" style="width:100%">🔄 Zagraj jeszcze raz</button>
+  </div>
+</div>
+<div class="overlay" id="overlay"><div class="modal" id="modal"></div></div>
+<div class="toasts" id="toasts"></div>
+<script>
+// ═══ DATA ═══════════════════════════════════════════════════════
+const COLORS=['#E87D7D','#4A90C4','#5BAD72','#F0C040','#9B7BC8'];
+const EMOJIS=['🐱','🐶','🐰','🐹','🦜'];
+const CNAMES={ogrod:'🌳 Ogród',karma:'🥩 Karma',czas:'⏰ Czas',
+  mieszkanie:'🏠 Mieszkanie',kuweta:'🪣 Kuweta',zabawki:'🧸 Zabawki',
+  klatka:'🏡 Klatka',warzywa:'🥦 Warzywa',akwarium:'🐟 Akwarium',lampa:'💡 Lampa UV'};
+const ANIMALS=[
+  {id:'dog_big',name:'Pies duży',e:'🐕',pts:5,qty:3,reqs:['ogrod','karma','czas'],
+   fact:'Pies ma nos 40× czulszy niż człowiek — rozróżnia ponad 1000 zapachów!'},
+  {id:'dog_sml',name:'Pies mały',e:'🐩',pts:3,qty:3,reqs:['mieszkanie','karma','czas'],
+   fact:'Serce małego psa bije 160 razy na minutę — 2× szybciej niż nasze!'},
+  {id:'cat',name:'Kot',e:'🐈',pts:3,qty:3,reqs:['mieszkanie','kuweta','zabawki'],
+   fact:'Koty śpią 16h dziennie. Mruczenie kota przyspiesza gojenie kości!'},
+  {id:'rabbit',name:'Królik',e:'🐇',pts:2,qty:2,reqs:['klatka','ogrod','warzywa'],
+   fact:'Królik skacze na 1 m wzwyż i pokonuje 3 metry w jednym susie!'},
+  {id:'parrot',name:'Papuga',e:'🦜',pts:2,qty:2,reqs:['klatka','czas','zabawki'],
+   fact:'Niektóre papugi rozumieją ponad 100 słów po ludzku!'},
+  {id:'turtle',name:'Żółw',e:'🐢',pts:2,qty:2,reqs:['klatka','lampa'],
+   fact:'Żółwie mogą żyć ponad 100 lat!'},
+  {id:'hedgehog',name:'Jeż',e:'🦔',pts:2,qty:3,reqs:['klatka','zabawki','mieszkanie'],
+   fact:'Jeż ma 5000–7000 igiełek, które rosną przez całe życie!'},
+  {id:'hamster',name:'Chomik',e:'🐹',pts:1,qty:3,reqs:['klatka','zabawki'],
+   fact:'Chomik mieści w policzkach połowę swojej wagi!'},
+  {id:'fish',name:'Rybki',e:'🐠',pts:1,qty:3,reqs:['akwarium'],
+   fact:'Złota rybka rozpoznaje twarze swoich opiekunów!'},
+];
+function buildCondDeck(){
+  const c={ogrod:3,mieszkanie:4,karma:4,warzywa:4,klatka:5,akwarium:2,czas:4,zabawki:4,lampa:2,kuweta:3};
+  const d=[];for(const[k,n]of Object.entries(c))for(let i=0;i<n;i++)d.push(k);
+  return shuffle(d);
+}
+const EVENTS=[
+  {id:'donation',name:'Dotacja!',type:'pos',e:'💰',qty:3,
+   desc:'Dobierz 2 Karty Warunków ze stosu.',
+   run:(g,p)=>{draw(g,p,2);log(g,`${p.n} dostaje dotację — 2 karty!`,'good')}},
+  {id:'volunteers',name:'Wolontariusze!',type:'pos',e:'👨‍👩‍👧',qty:2,
+   desc:'Wykonaj dodatkowy rzut kostką.',
+   run:(g,p)=>{g.extraRoll=true;log(g,`${p.n} dostaje dodatkowy rzut!`,'good')}},
+  {id:'article',name:'Artykuł w gazecie',type:'pos',e:'📰',qty:2,
+   desc:'Dobierz 1 Kartę Warunku.',
+   run:(g,p)=>{draw(g,p,1);log(g,`${p.n} dobiera 1 kartę.`,'good')}},
+  {id:'sunshine',name:'Słoneczna Niedziela',type:'pos',e:'🌈',qty:2,
+   desc:'Aktywuj swój żeton Słonecznej Niedzieli (●). Użyj przy adopcji żeby pominąć 1 Warunek.',
+   run:(g,p)=>{p.sn=true;log(g,`${p.n} aktywuje żeton SN!`,'good')}},
+  {id:'openday',name:'Dzień Otwarty',type:'pos',e:'🎉',qty:3,
+   desc:'Każdy gracz dobiera 1 Kartę Warunku.',
+   run:(g,p)=>{g.players.forEach(pl=>draw(g,pl,1));log(g,'Wszyscy dobierają 1 kartę!','good')}},
+  {id:'vet',name:'Weterynarz',type:'neg',e:'🏥',qty:2,
+   desc:'Oddaj 1 Kartę Warunku na stos odrzuconych.',
+   run:(g,p)=>{g.pending='lose_card';log(g,`${p.n} musi oddać kartę!`,'bad')}},
+  {id:'rain',name:'Deszczowy tydzień',type:'neg',e:'🌧️',qty:2,
+   desc:'Opuść następną turę.',
+   run:(g,p)=>{p.skip=true;log(g,`${p.n} traci następną turę.`,'bad')}},
+  {id:'repair',name:'Remont klatki',type:'neg',e:'🔧',qty:2,
+   desc:'Nie możesz adoptować w tej turze!',
+   run:(g,p)=>{p.noAdopt=true;log(g,`${p.n} nie może adoptować tej tury!`,'bad')}},
+  {id:'escape',name:'Ucieczka zwierzaka',type:'neg',e:'😿',qty:1,
+   desc:'Jeśli adoptowałeś w tej turze — zwróć zwierzę do schroniska.',
+   run:(g,p)=>{
+     if(p.adoptedNow){
+       const a=p.adoptedNow;p.adopted=p.adopted.filter(x=>x!==a);p.pts-=a.pts;
+       const sh=g.shelter.find(s=>s.id===a.id);if(sh)sh.qty++;
+       else g.shelter.push({...ANIMALS.find(x=>x.id===a.id),qty:1});
+       log(g,`${p.n} — zwierzę uciekło!`,'bad');toast('😿 Ucieczka!','bad');
+     }else log(g,'Ucieczka — brak efektu.','');
+     p.adoptedNow=null;
+   }},
+  {id:'trade',name:'Wymiana doświadczeń',type:'neu',e:'🔄',qty:3,
+   desc:'Zamień 1 Kartę Warunku z wybranym graczem (oboje muszą się zgodzić).',
+   run:(g,p)=>{g.pending='trade';log(g,`${p.n} proponuje wymianę!`,'')}},
+  {id:'gift',name:'Prezent od sąsiada',type:'neu',e:'🎁',qty:3,
+   desc:'Poproś wybranego gracza o 1 Kartę. Ten gracz może odmówić.',
+   run:(g,p)=>{g.pending='gift';log(g,`${p.n} prosi o kartę.`,'')}},
+  {id:'joker',name:'Joker Schroniska',type:'neu',e:'🃏',qty:3,
+   desc:'Trzymaj w ręce (liczy się do limitu 5!). Zastępuje 1 dowolny Warunek przy adopcji.',
+   run:(g,p)=>{p.hand.push('joker');clamp(g,p);log(g,`${p.n} dostaje Jokera!`,'good')}},
+];
+function buildEventDeck(){
+  const d=[];for(const ev of EVENTS)for(let i=0;i<ev.qty;i++)d.push({...ev});
+  return shuffle(d);
+}
+// 48 pól trasy — quiz zastępuje część pól "dom"
+const FTYPES=['start',
+  'dom','wydar','schron','quiz','odp','dom','wydar','schron','quiz','wydar','bonus',
+  'quiz','wydar','schron','dom','odp','quiz','wydar','schron','dom','wydar','bonus',
+  'dom','quiz','schron','dom','odp','dom','wydar','schron','quiz','wydar','bonus',
+  'dom','wydar','schron','quiz','odp','dom','wydar','schron','dom','quiz','bonus'];
+while(FTYPES.length<48)FTYPES.push('dom');FTYPES.length=48;
+
+// ═══ QUIZ — 100 pytań (mix: dzieci + dorośli) ══════════════════
+// Poziom: 'k'=dzieci, 'a'=dorośli
+const QUIZ_QUESTIONS=[
+  // ── DZIECI ────────────────────────────────────────────────────
+  {q:'Ile nóg ma pies?',a:['4','2','6','8'],c:0,lv:'k'},
+  {q:'Jak nazywa się domek królika?',a:['Legowisko','Klatka','Nora','Budka'],c:2,lv:'k'},
+  {q:'Co jedzą rybki w akwarium?',a:['Trawę','Specjalną karmę dla ryb','Chleb','Ser'],c:1,lv:'k'},
+  {q:'Jak mruczy kot gdy jest zadowolony?',a:['Szczeka','Mruczy','Ćwierka','Ryczy'],c:1,lv:'k'},
+  {q:'Ile łap ma kot?',a:['2','3','4','6'],c:2,lv:'k'},
+  {q:'Co je królik?',a:['Mięso','Warzywa i siano','Ryby','Cukierki'],c:1,lv:'k'},
+  {q:'Jak nazywa się młody pies?',a:['Kotek','Szczeniak','Kurczak','Źrebak'],c:1,lv:'k'},
+  {q:'Co robi chomik w kołowrotku?',a:['Śpi','Biega dla ćwiczeń','Je','Pływa'],c:1,lv:'k'},
+  {q:'Jakim zwierzęciem jest żółw?',a:['Ssakiem','Ptakiem','Gadem','Rybą'],c:2,lv:'k'},
+  {q:'Co to jest kuweta kota?',a:['Miska na wodę','Toaleta kota','Legowisko','Zabawka'],c:1,lv:'k'},
+  {q:'Ile oczu ma papuga?',a:['1','2','4','6'],c:1,lv:'k'},
+  {q:'Jak woła pies?',a:['Miau','Hau hau','Kwa kwa','Mu'],c:1,lv:'k'},
+  {q:'Czym pokryty jest jeż?',a:['Sierścią','Igiełkami','Piórami','Łuskami'],c:1,lv:'k'},
+  {q:'Gdzie żyją rybki?',a:['Na drzewie','Pod ziemią','W wodzie','Na niebie'],c:2,lv:'k'},
+  {q:'Jak nazywa się domek dla psa w ogrodzie?',a:['Klatka','Buda','Nora','Terrarium'],c:1,lv:'k'},
+  {q:'Który zwierzak mieszka w terrarium?',a:['Pies','Kot','Żółw','Chomik'],c:2,lv:'k'},
+  {q:'Co robi pies kiedy macha ogonem?',a:['Jest smutny','Jest zły','Jest szczęśliwy','Chce spać'],c:2,lv:'k'},
+  {q:'Jak długo śpi kot dziennie?',a:['2 godziny','8 godzin','16 godzin','24 godziny'],c:2,lv:'k'},
+  {q:'Co jedzą koty?',a:['Tylko trawę','Mięso i karmy','Tylko ryby','Warzywa'],c:1,lv:'k'},
+  {q:'Ile nóg ma papuga?',a:['2','4','6','8'],c:0,lv:'k'},
+  {q:'Jak nazywa się dziecko kota?',a:['Szczeniak','Kotek (kociak)','Źrebak','Cielak'],c:1,lv:'k'},
+  {q:'Co je chomik?',a:['Mięso','Ziarna, warzywa, owoce','Ryby','Liście drzew'],c:1,lv:'k'},
+  {q:'Które zwierzę ma muszlę?',a:['Kot','Pies','Żółw','Jeż'],c:2,lv:'k'},
+  {q:'Jak papuga powtarza ludzką mowę?',a:['Śpiewa','Mówi i naśladuje dźwięki','Tańczy','Pisze'],c:1,lv:'k'},
+  {q:'Co to jest terrarium?',a:['Miska na wodę','Szklany dom dla gadów','Klatka dla ptaków','Kojec dla psów'],c:1,lv:'k'},
+  {q:'Ile kart Warunku potrzeba do adopcji Rybek?',a:['3','2','1','4'],c:2,lv:'k'},
+  {q:'Który zwierzak wymaga Lampy UV?',a:['Chomik','Papuga','Żółw','Jeż'],c:2,lv:'k'},
+  {q:'Co robi jeż gdy się boi?',a:['Ucieka','Zwija się w kulkę','Szczeka','Gryzie'],c:1,lv:'k'},
+  {q:'Ile punktów daje adoptowany chomik?',a:['3','2','1','5'],c:2,lv:'k'},
+  {q:'Jak nazywa się dom złotej rybki?',a:['Terrarium','Klatka','Akwarium','Buda'],c:2,lv:'k'},
+  {q:'Co robi pies machając ogonem i przykucając?',a:['Chce spać','Zaprasza do zabawy','Jest chory','Chce jeść'],c:1,lv:'k'},
+  {q:'Które zmysły ma pies najlepiej rozwinięte?',a:['Wzrok','Węch i słuch','Dotyk','Smak'],c:1,lv:'k'},
+  {q:'Co je królik oprócz warzyw?',a:['Mięso','Siano','Ryby','Cukier'],c:1,lv:'k'},
+  {q:'Ile punktów daje Pies duży?',a:['3','2','1','5'],c:3,lv:'k'},
+  {q:'Jak wabi się kot gdy go wołamy?',a:['Zawsze przychodzi','Przychodzi gdy chce','Nigdy','Ucieka'],c:1,lv:'k'},
+  {q:'Co to jest Joker w grze Schronisko?',a:['Kara','Karta zastępująca dowolny Warunek','Dodatkowy rzut','Punkty'],c:1,lv:'k'},
+  {q:'Ile zwierząt w schronisku ma najwyżej 1 punkt?',a:['1','2','3','4'],c:1,lv:'k'},
+  {q:'Które z tych zwierząt jest najdroższe (ma najwięcej pkt)?',a:['Kot','Rybki','Pies duży','Chomik'],c:2,lv:'k'},
+  {q:'Co znaczy żeton ☀️● Słoneczna Niedziela?',a:['Tracisz turę','Możesz pominąć 1 Warunek','Dostajasz 2 karty','Cofasz się'],c:1,lv:'k'},
+  {q:'Na którym polu możesz adoptować zwierzę?',a:['Dom','Bonus','Schronisko','Wydarzenie'],c:2,lv:'k'},
+  // ── DOROŚLI ───────────────────────────────────────────────────
+  {q:'Ile razy czulszy jest węch psa od ludzkiego?',a:['5×','40×','100×','2×'],c:1,lv:'a'},
+  {q:'Ile igiełek ma jeż?',a:['100–500','1000–2000','5000–7000','10 000+'],c:2,lv:'a'},
+  {q:'Ile słów może rozumieć inteligentna papuga?',a:['10–20','50–100','100+','Żadnych'],c:2,lv:'a'},
+  {q:'Jak długo żyje żółw stepowy?',a:['10–20 lat','30–50 lat','Ponad 100 lat','5–10 lat'],c:2,lv:'a'},
+  {q:'Co to jest DDEX w dystrybucji muzyki?',a:['Format pliku audio','Standard wymiany danych muzycznych','Serwis streamingowy','Kontrakt płytowy'],c:1,lv:'a'},
+  {q:'Dlaczego koty mruczą?',a:['Tylko gdy są głodne','Mruczenie wytwarza wibracje leczące kości','To oznaka agresji','Komunikują się z innymi kotami'],c:1,lv:'a'},
+  {q:'Czym oddychają ryby?',a:['Płucami','Skrzelami','Skórą','Nosem'],c:1,lv:'a'},
+  {q:'Co oznacza termin „mikrochip" u zwierząt?',a:['Suplement diety','Elektroniczny implant identyfikacyjny','Rodzaj szczepionki','Chip do GPS'],c:1,lv:'a'},
+  {q:'Jak często należy odrobaczać psa?',a:['Raz w życiu','Co 3–6 miesięcy','Codziennie','Nigdy'],c:1,lv:'a'},
+  {q:'Co to jest kastracja a co sterylizacja?',a:['Są tym samym','Kastracja=samiec, sterylizacja=samica','Kastracja=samica, sterylizacja=samiec','Tylko dla kotów'],c:1,lv:'a'},
+  {q:'Ile godzin dziennie śpi kot?',a:['4–6','8–10','12–16','20–22'],c:2,lv:'a'},
+  {q:'Co to jest DSP w kontekście muzyki?',a:['Digital Sound Platform','Digital Service Provider (np. Spotify)','Direct Sound Processor','Disco Sound Program'],c:1,lv:'a'},
+  {q:'Jak pies komunikuje stres?',a:['Tylko przez szczekanie','Ziewanie, oblizywanie nosa, odwracanie wzroku','Merdanie ogonem','Głośne sapanie'],c:1,lv:'a'},
+  {q:'Dlaczego żółw potrzebuje Lampy UV?',a:['Ogrzewania','Syntezy witaminy D3 i zdrowia skorupy','Do widzenia w nocy','Imitacji księżyca'],c:1,lv:'a'},
+  {q:'Czym jest „enrichment" u zwierząt?',a:['Specjalna karma','Wzbogacenie środowiska dla dobrostanu','Szczepionka','Metoda tresury'],c:1,lv:'a'},
+  {q:'Ile zmysłów aktywuje akwarium na człowieka?',a:['1 (wzrok)','2 (wzrok+słuch)','3 (wzrok+słuch+dotyk)','4'],c:1,lv:'a'},
+  {q:'Co to jest „pozytywne wzmocnienie" w tresurze?',a:['Karanie za złe zachowanie','Nagradzanie pożądanego zachowania','Ignorowanie psa','Stosowanie szoku'],c:1,lv:'a'},
+  {q:'Skąd pochodzi rasa Golden Retriever?',a:['USA','Niemcy','Szkocja','Francja'],c:2,lv:'a'},
+  {q:'Który narząd u papug odpowiada za mowę?',a:['Krtań','Syrinx','Język','Dziób'],c:1,lv:'a'},
+  {q:'Ile komór ma serce ssaka?',a:['2','3','4','6'],c:2,lv:'a'},
+  {q:'Co to jest „zoonoza"?',a:['Choroba tylko zwierząt','Choroba przenoszona ze zwierząt na ludzi','Zoo dla chorych zwierząt','Rodzaj diety dla psów'],c:1,lv:'a'},
+  {q:'Jak długo trwa ciąża u kota?',a:['1 miesiąc','~63–65 dni','6 miesięcy','Rok'],c:1,lv:'a'},
+  {q:'Co oznacza termin „etologia"?',a:['Nauka o etyce','Nauka o zachowaniu zwierząt','Hodowla zwierząt','Leczenie zwierząt'],c:1,lv:'a'},
+  {q:'Dlaczego chomik magazynuje jedzenie w policzkach?',a:['Bo ma zły smak','Instynkt przetrwania z dzikich przodków','Bo jest leniwy','Bo nie ma żołądka'],c:1,lv:'a'},
+  {q:'Co to jest „parvowirus" u psów?',a:['Pasożyt','Grzyb','Groźny wirus atakujący jelita','Lek przeciwbólowy'],c:2,lv:'a'},
+  {q:'Ile receptorów węchowych ma pies (szacunkowo)?',a:['5 milionów','50 milionów','300 milionów','1 miliard'],c:2,lv:'a'},
+  {q:'Co to jest „kot norweski leśny"?',a:['Dziki kot','Rasa kota domowego','Rodzaj rysia','Nazwa choroby'],c:1,lv:'a'},
+  {q:'Dlaczego króliki potrzebują siana?',a:['Jako zabawki','Dla zdrowia zębów i jelit','Bo to ich legowisko','Bo lubią jeść trawę'],c:1,lv:'a'},
+  {q:'Jak długo żyje złota rybka przy dobrej opiece?',a:['1–2 lata','5–10 lat','Do 15–20 lat','Ponad 50 lat'],c:2,lv:'a'},
+  {q:'Co oznacza „chip" w uchu królika hodowlanego?',a:['Tracker GPS','Kolczyk identyfikacyjny','Lek przeciwpasożytniczy','Ozdoba'],c:1,lv:'a'},
+  {q:'Czym jest „FIV" u kotów?',a:['Suplement diety','Koci wirus niedoboru odporności (koci AIDS)','Rodzaj szczepionki','Pasożyt skóry'],c:1,lv:'a'},
+  {q:'Co wyróżnia jeże nocne z perspektywy opieki?',a:['Są aktywne w dzień','Śpią w dzień, aktywne nocą — potrzebują ciszy w dzień','Nie potrzebują snu','Lubią jasne światło'],c:1,lv:'a'},
+  {q:'Ile sekund trwa mrugnięcie powieką u kota?',a:['Tyle samo co u człowieka','Koty mrugnięcie powolne = sygnał zaufania','Koty nie mrugają','10× szybciej'],c:1,lv:'a'},
+  {q:'Co to jest „adopcja odpowiedzialna" zwierzęcia?',a:['Wzięcie zwierzęcia za darmo','Pełne przygotowanie + opieka przez całe życie','Hodowla zwierząt','Kupno w sklepie'],c:1,lv:'a'},
+  {q:'Ile punktów można zdobyć w Schronisku za bonus różnorodności?',a:['Stały bonus 3pkt','1pkt za każde 3 różne gatunki','2pkt za każdy gatunek','Brak bonusu'],c:1,lv:'a'},
+  {q:'Jaka jest maksymalna liczba psów dla 1 gracza?',a:['1','2','3','Bez limitu'],c:1,lv:'a'},
+  {q:'Co to jest „nadmierne szczekanie" i jak mu zapobiec?',a:['Jest normalne, nie trzeba','Trening + zajęcie psu głowy + usuwanie bodźców','Dać psu tabletki','Zostawić psa samego'],c:1,lv:'a'},
+  {q:'Skąd pochodzi rasa chomika syryjskiego?',a:['Chin','Syrii i okolic Bliskiego Wschodu','Australii','Rosji'],c:1,lv:'a'},
+  {q:'Który pierwiastek w wodzie jest toksyczny dla ryb?',a:['Tlen','Chlor (z kranówki)','Wapń','Magnez'],c:1,lv:'a'},
+  {q:'Co to jest „RSPCA"?',a:['Sklep zoologiczny','Brytyjska organizacja ochrony zwierząt','Karmę dla psów','Rasa kota'],c:1,lv:'a'},
+  {q:'Dlaczego papugi żują przedmioty?',a:['Z nudów tylko','Potrzeba ścierania dzioba + ciekawość + zabawa','Bo mają próchnicę','By zbudować gniazdo'],c:1,lv:'a'},
+  {q:'Co to jest „temperatura krytyczna" dla żółwia wodnego?',a:['Nie ma znaczenia','Temperatura wody poniżej 20°C może być groźna','Żółwie lubią zimno','Powyżej 40°C jest bezpieczna'],c:1,lv:'a'},
+  {q:'Co oznacza „rescue" w kontekście zwierząt?',a:['Rasa psa','Uratowanie zwierzęcia ze schroniska lub trudnej sytuacji','Specjalna karma','Szczepionka'],c:1,lv:'a'},
+  {q:'Jak działa zmysł „Jacobsona" u gadów?',a:['Słyszą nim','Wykrywają zapachy językiem','Widzą UV','Czują temperaturę'],c:1,lv:'a'},
+  {q:'Co to jest „fosforylacja oksydacyjna" (pytanie z biologii)?',a:['Karmienie rybek','Proces wytwarzania ATP w komórkach','Rodzaj szczepionki','Metoda tresury'],c:1,lv:'a'},
+  {q:'Ile serca bije u małego psa na minutę?',a:['60–80','80–100','100–160','200+'],c:2,lv:'a'},
+  {q:'Co to jest „Toxoplasma gondii"?',a:['Karma dla kota','Pasożyt przenoszony m.in. przez koty','Rasa kota','Rodzaj akwarium'],c:1,lv:'a'},
+  {q:'Dlaczego koty liżą sierść zaraz po dotknięciu przez człowieka?',a:['Bo ich nie lubimy','Przywracają własny zapach + higiena','Bo są głodne','Bo się boją'],c:1,lv:'a'},
+  {q:'Co to jest „etogram"?',a:['Dieta zwierzęcia','Katalog wszystkich zachowań gatunku','Klatka dla zwierząt','Rodzaj lekarstwa'],c:1,lv:'a'},
+  {q:'Jak długo może nie jeść dorosły zdrowy pies?',a:['Kilka godzin','1 dzień','3–5 dni (z wodą)','2 tygodnie'],c:2,lv:'a'},
+  {q:'Ile gatunków papug istnieje na świecie?',a:['~20','~90','~400','Ponad 1000'],c:2,lv:'a'},
+  {q:'Co oznacza „5 wolności zwierząt" (standard dobrostanu)?',a:['5 posiłków dziennie','Brak głodu, bólu, strachu, dyskomfortu + swoboda zachowań','5 spacerów dziennie','5 praw prawnych'],c:1,lv:'a'},
+  {q:'Skąd pochodzi termin „canis lupus familiaris"?',a:['Kota domowego','Łacińska nazwa psa domowego','Wilka polarnego','Chomika'],c:1,lv:'a'},
+];
+
+function buildQuizDeck(){
+  return shuffle([...QUIZ_QUESTIONS]);
+}
+
+// Liczniki odpowiedzi poprawnych/błędnych
+let quizStats={correct:0,wrong:0};
+
+// ═══ STATE ══════════════════════════════════════════════════════
+let G=null;
+function newGame(defs){
+  quizStats={correct:0,wrong:0};
+  G={players:defs.map((d,i)=>({
+      id:i,n:d.name,color:d.color,emoji:EMOJIS[i],ai:d.ai,
+      pos:0,hand:[],sn:false,adopted:[],pts:0,skip:false,noAdopt:false,adoptedNow:null
+    })),
+    cur:0,round:1,phase:'roll',
+    cdeck:buildCondDeck(),cdisc:[],edeck:buildEventDeck(),edisc:[],
+    qdeck:buildQuizDeck(),qdisc:[],
+    shelter:ANIMALS.map(a=>({...a})),
+    extraRoll:false,pending:null,over:false,_log:[]
+  };
+  drawBoard();renderSidebar();updateButtons();updateHint();
+  log(G,`Gra rozpoczęta! Zaczyna: ${G.players[0].emoji} ${G.players[0].n}`,'hl');
+}
+const cp=()=>G.players[G.cur];
+const ftype=n=>FTYPES[n%48];
+const left=()=>G.shelter.reduce((s,a)=>s+a.qty,0);
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+function shuffle(a){const b=[...a];for(let i=b.length-1;i>0;i--){const j=0|Math.random()*(i+1);[b[i],b[j]]=[b[j],b[i]]}return b}
+function draw(g,p,n=1){for(let i=0;i<n;i++){
+  if(!g.cdeck.length){if(!g.cdisc.length)return;g.cdeck=shuffle(g.cdisc);g.cdisc=[];toast('🔄 Tasujemy stos','info');}
+  p.hand.push(g.cdeck.pop());clamp(g,p);
+}}
+function clamp(g,p){while(p.hand.length>5){
+  const ni=p.hand.findIndex(c=>c!=='joker');
+  const c=ni>=0?p.hand.splice(ni,1)[0]:p.hand.shift();
+  if(c!=='joker')g.cdisc.push(c);
+  toast(`${p.n}: limit ręki — odrzucono`,'info');
+}}
+function log(g,txt,type=''){g._log.unshift({txt,type});if(g._log.length>40)g._log.pop();renderLog();}
+function toast(txt,type=''){
+  const el=document.createElement('div');el.className=`toast ${type}`;el.textContent=txt;
+  document.getElementById('toasts').appendChild(el);setTimeout(()=>el.remove(),3200);
+}
+
+// ═══ ADOPT CHECK ════════════════════════════════════════════════
+function checkAdopt(p,animal){
+  const need=[...animal.reqs];const h=[...p.hand];const miss=[];
+  for(const r of need){const i=h.indexOf(r);if(i>=0)h.splice(i,1);else miss.push(r);}
+  if(!miss.length)return{can:true,jUsed:0,snUsed:false,missing:[]};
+  let jLeft=h.filter(c=>c==='joker').length,snLeft=p.sn?1:0;
+  const still=[];
+  for(const r of miss){if(jLeft>0)jLeft--;else if(snLeft>0)snLeft--;else still.push(r);}
+  const jUsed=p.hand.filter(c=>c==='joker').length-jLeft;
+  const snUsed=(p.sn?1:0)-snLeft>0;
+  return still.length?{can:false,jUsed:0,snUsed:false,missing:still}:{can:true,jUsed,snUsed,missing:[]};
+}
+
+// ═══ SOUNDS (Web Audio API — zero external files) ═══════════════
+const AC=new(window.AudioContext||window.webkitAudioContext)();
+function resumeAC(){if(AC.state==='suspended')AC.resume();}
+function sndDice(){
+  resumeAC();
+  // Kilka krótkich kliknięć jak kostka o stół
+  [0,60,120,200].forEach((t,i)=>{
+    const o=AC.createOscillator(),g=AC.createGain();
+    o.connect(g);g.connect(AC.destination);
+    o.type='square';o.frequency.value=180+i*40;
+    g.gain.setValueAtTime(0.18,AC.currentTime+t/1000);
+    g.gain.exponentialRampToValueAtTime(0.001,AC.currentTime+t/1000+0.07);
+    o.start(AC.currentTime+t/1000);o.stop(AC.currentTime+t/1000+0.08);
+  });
+  // Końcowy "bum"
+  const o2=AC.createOscillator(),g2=AC.createGain();
+  o2.connect(g2);g2.connect(AC.destination);
+  o2.type='sine';o2.frequency.setValueAtTime(220,AC.currentTime+0.25);
+  o2.frequency.exponentialRampToValueAtTime(80,AC.currentTime+0.45);
+  g2.gain.setValueAtTime(0.22,AC.currentTime+0.25);
+  g2.gain.exponentialRampToValueAtTime(0.001,AC.currentTime+0.45);
+  o2.start(AC.currentTime+0.25);o2.stop(AC.currentTime+0.46);
+}
+function sndStep(){
+  resumeAC();
+  const o=AC.createOscillator(),g=AC.createGain();
+  o.connect(g);g.connect(AC.destination);
+  o.type='sine';o.frequency.value=440+Math.random()*120;
+  g.gain.setValueAtTime(0.06,AC.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.001,AC.currentTime+0.07);
+  o.start();o.stop(AC.currentTime+0.08);
+}
+function sndLand(fieldType){
+  resumeAC();
+  const freqs={start:[523,659,784],schron:[392,523,659,784],bonus:[330,440,550,660],dom:[330,415],wydar:[220,277],odp:[220,185]};
+  const notes=freqs[fieldType]||freqs.dom;
+  notes.forEach((f,i)=>{
+    const o=AC.createOscillator(),g=AC.createGain();
+    o.connect(g);g.connect(AC.destination);
+    o.type='sine';o.frequency.value=f;
+    const t=AC.currentTime+i*0.08;
+    g.gain.setValueAtTime(0.12,t);
+    g.gain.exponentialRampToValueAtTime(0.001,t+0.18);
+    o.start(t);o.stop(t+0.2);
+  });
+}
+function sndAdopt(){
+  resumeAC();
+  // Fanfara adopcji — radosne nuty
+  [523,659,784,1047].forEach((f,i)=>{
+    const o=AC.createOscillator(),g=AC.createGain();
+    o.connect(g);g.connect(AC.destination);
+    o.type='sine';o.frequency.value=f;
+    const t=AC.currentTime+i*0.1;
+    g.gain.setValueAtTime(0.15,t);
+    g.gain.exponentialRampToValueAtTime(0.001,t+0.25);
+    o.start(t);o.stop(t+0.26);
+  });
+}
+
+// ═══ BOARD SVG ═════════════════════════════════════════════════
+// SVG 1200×680 — prostokąt, pola obwodu większe kosztem mniejszego środka
+const SVW=1200, SVH=680;
+const NH=14, NV=10;  // mniej rzędów → wyższe pola pionowe
+// Rozmiar pól — obwód dostaje tyle miejsca ile potrzebuje
+const CW=Math.floor((SVW-2)/NH);   // ~85px
+const CH=Math.floor((SVH-2)/NV);   // ~68px
+const GX=2, GY=2;
+const TW2=NH*CW+(NH-1)*GX, TH2=NV*CH+(NV-1)*GY;
+const OX=Math.floor((SVW-TW2)/2), OY=Math.floor((SVH-TH2)/2);
+
+function fxy(n){
+  if(n<NH) return{x:OX+n*(CW+GX), y:OY+(NV-1)*(CH+GY)};
+  let n2=n-NH;
+  if(n2<NV-2) return{x:OX+(NH-1)*(CW+GX), y:OY+(NV-2-n2)*(CH+GY)};
+  let n3=n2-(NV-2);
+  if(n3<NH) return{x:OX+(NH-1-n3)*(CW+GX), y:OY};
+  let n4=n3-NH;
+  return{x:OX, y:OY+(n4+1)*(CH+GY)};
+}
+
+const FCOL ={start:'#1E1E2E',dom:'#FFFFFF',wydar:'#EDE8FA',schron:'#1A1A2E',odp:'#F0F0F0',bonus:'#2E2E4E',quiz:'#0D3B1E'};
+const FCOL2={start:'#2E2E4A',dom:'#F8F6FF',wydar:'#DDD6F8',schron:'#26264A',odp:'#E8E8E8',bonus:'#3E3E6A',quiz:'#1A5C30'};
+const FTCOL={start:'#FFE57A',dom:'#1A1A1A',wydar:'#2E1A6A',schron:'#FFE57A',odp:'#777',bonus:'#FFE57A',quiz:'#A8FFB0'};
+const FEMOJI={start:'⭐',dom:'🏡',wydar:'🎲',schron:'🐾',odp:'💤',bonus:'🌟',quiz:'❓'};
+const FNAME ={start:'START',dom:'Dom',wydar:'Wydarzenie',schron:'Schronisko',odp:'Odpoczynek',bonus:'BONUS',quiz:'Quiz!'};
+const FDESC ={start:'+1 karta',dom:'+1 karta',wydar:'losuj kartę',schron:'adoptuj!',odp:'tracisz turę',bonus:'+2 karty',quiz:'+1 karta za odpowiedź'};
+
+function se(tag,a,t=''){
+  const el=document.createElementNS('http://www.w3.org/2000/svg',tag);
+  for(const[k,v]of Object.entries(a))el.setAttribute(k,v);
+  if(t)el.textContent=t;return el;
+}
+
+function drawBoard(){
+  const svg=document.getElementById('svg');svg.innerHTML='';
+  const defs=se('defs',{});svg.appendChild(defs);
+
+  // Filtr cienia
+  const filt=se('filter',{id:'shad','x':'-8%','y':'-8%','width':'116%','height':'116%'});
+  filt.appendChild(se('feDropShadow',{dx:'1',dy:'2','stdDeviation':'2.5','flood-color':'rgba(0,0,0,.14)'}));
+  defs.appendChild(filt);
+
+  // Tło
+  svg.appendChild(se('rect',{x:0,y:0,width:SVW,height:SVH,fill:'#FFF8EE',rx:10}));
+  svg.appendChild(se('rect',{x:3,y:3,width:SVW-6,height:SVH-6,fill:'none',stroke:'#F0D090','stroke-width':'2',rx:8}));
+
+  // ── 48 pól trasy ─────────────────────────────────────────────
+  for(let n=0;n<48;n++){
+    const{x,y}=fxy(n), ft=FTYPES[n];
+    const g=se('g',{'data-n':n});
+
+    // Gradient tła pola
+    const gid=`bg${n}`;
+    const gr=se('linearGradient',{id:gid,x1:'0%',y1:'0%',x2:'0%',y2:'100%'});
+    gr.appendChild(se('stop',{'offset':'0%','stop-color':FCOL2[ft]}));
+    gr.appendChild(se('stop',{'offset':'100%','stop-color':FCOL[ft]}));
+    defs.appendChild(gr);
+
+    // Obramowanie zależy od typu
+    const stroke=ft==='schron'?'#E8833A':ft==='start'?'#666':ft==='bonus'?'#888':'#DEDEDE';
+    const sw2=ft==='schron'?'2.5':ft==='start'?'2':'1';
+    g.appendChild(se('rect',{x:x+.5,y:y+.5,width:CW-1,height:CH-1,
+      fill:`url(#${gid})`,stroke,['stroke-width']:sw2,rx:'5'}));
+
+    // Wzory wypełnienia
+    if(ft==='wydar'){
+      const pid=`wp${n}`;
+      const p2=se('pattern',{id:pid,width:'10',height:'10',patternUnits:'userSpaceOnUse',patternTransform:'rotate(45)'});
+      p2.appendChild(se('rect',{x:'0',y:'0',width:'5',height:'10',fill:'rgba(100,80,200,.06)'}));
+      defs.appendChild(p2);
+      g.appendChild(se('rect',{x:x+.5,y:y+.5,width:CW-1,height:CH-1,fill:`url(#${pid})`,rx:'5'}));
+    }
+    if(ft==='odp'){
+      const pid=`op${n}`;
+      const p2=se('pattern',{id:pid,width:'8',height:'8',patternUnits:'userSpaceOnUse'});
+      p2.appendChild(se('line',{x1:'0',y1:'4',x2:'8',y2:'4',stroke:'rgba(0,0,0,.06)','stroke-width':'2'}));
+      defs.appendChild(p2);
+      g.appendChild(se('rect',{x:x+.5,y:y+.5,width:CW-1,height:CH-1,fill:`url(#${pid})`,rx:'5'}));
+    }
+
+    const tc=FTCOL[ft];
+    const emSz=Math.min(CH*.42, CW*.32, 26);
+    const nmSz=Math.max(Math.min(CH*.175, CW*.13, 13), 9);
+    const dsSz=Math.max(nmSz*.78, 7.5);
+    const cx=x+CW/2;
+    // Wyśrodkuj blok tekstowy w polu
+    const blockH=emSz+nmSz*1.4+dsSz*1.3;
+    const blockY=y+(CH-blockH)/2+emSz*.9;
+
+    g.appendChild(se('text',{x:cx,y:blockY,'text-anchor':'middle','font-size':emSz},FEMOJI[ft]));
+    g.appendChild(se('text',{x:cx,y:blockY+nmSz*1.45,'text-anchor':'middle',
+      'font-family':'Nunito,sans-serif','font-weight':'800','font-size':nmSz,fill:tc},FNAME[ft]));
+    g.appendChild(se('text',{x:cx,y:blockY+nmSz*1.45+dsSz*1.3,'text-anchor':'middle',
+      'font-family':'Nunito,sans-serif','font-size':dsSz,fill:tc,opacity:'.65'},FDESC[ft]));
+    // Numer
+    g.appendChild(se('text',{x:x+3,y:y+8,'font-size':'6.5',fill:ft==='schron'||ft==='start'||ft==='bonus'?'rgba(255,255,255,.35)':'#D0D0D0','font-family':'Nunito,sans-serif'},`${n}`));
+
+    svg.appendChild(g);
+  }
+
+  // ── Schronisko (środek) ───────────────────────────────────────
+  const sx=OX+(CW+GX), sy=OY+(CH+GY);
+  const sw=(NH-2)*(CW+GX)-GX, sh=(NV-2)*(CH+GY)-GY;
+
+  // Gradient tła schroniska
+  const sgr=se('linearGradient',{id:'shg',x1:'0%',y1:'0%',x2:'0%',y2:'100%'});
+  sgr.appendChild(se('stop',{'offset':'0%','stop-color':'#FFFFFF'}));
+  sgr.appendChild(se('stop',{'offset':'100%','stop-color':'#FFF5E8'}));
+  defs.appendChild(sgr);
+
+  svg.appendChild(se('rect',{x:sx+2,y:sy+2,width:sw,height:sh,fill:'rgba(0,0,0,.07)',rx:'9'}));
+  svg.appendChild(se('rect',{x:sx,y:sy,width:sw,height:sh,fill:'url(#shg)',
+    stroke:'#E8833A','stroke-width':'2.5',rx:'9'}));
+  svg.appendChild(se('rect',{x:sx+4,y:sy+4,width:sw-8,height:sh-8,
+    fill:'none',stroke:'#F5DEB0','stroke-width':'.8',rx:'7'}));
+
+  const titSz=Math.min(sw*.038, sh*.09, 20);
+  svg.appendChild(se('text',{x:sx+sw/2,y:sy+titSz+8,'text-anchor':'middle',
+    'font-family':'Baloo 2,cursive','font-weight':'800','font-size':titSz,fill:'#5C3D20'},'🏠 SCHRONISKO'));
+  svg.appendChild(se('text',{x:sx+sw/2,y:sy+titSz+20,'text-anchor':'middle',
+    'font-family':'Nunito,sans-serif','font-size':titSz*.65,fill:'#AA8860',opacity:'.8'},
+    'kliknij zwierzę żeby zobaczyć wymagania'));
+  svg.appendChild(se('line',{x1:sx+14,y1:sy+titSz+25,x2:sx+sw-14,y2:sy+titSz+25,
+    stroke:'#F0D0A0','stroke-width':'1'}));
+
+  if(G) drawShelter(svg, defs, sx+8, sy+titSz+30, sw-16, sh-titSz-38);
+  if(G) drawPawns(svg);
+}
+
+// Zwierzęta jako stos ikon — duże emoji, licznik ×N, klikalne
+function drawShelter(svg, defs, gx, gy, gw, gh){
+  const N=G.shelter.length; // 9
+  // Układ: 9 kolumn × 1 rząd — każde zwierzę to pionowa "kupka" kart
+  const cols=9, rows=1;
+  const gap=8;
+  const tw=Math.floor((gw-(cols-1)*gap)/cols);
+  const th=gh;
+
+  G.shelter.forEach((a,i)=>{
+    const tx=gx+i*(tw+gap), ty=gy;
+    const g2=se('g',{style:'cursor:pointer',onclick:`showAnimalInfo('${a.id}')`,class:'shelter-animal'});
+    g2.appendChild(se('title',{},`${a.name} — kliknij żeby zobaczyć wymagania`));
+
+    if(a.qty===0){
+      // Wyszarzone — adoptowane
+      g2.appendChild(se('rect',{x:tx,y:ty,width:tw,height:th,
+        fill:'#F3F3F3',stroke:'#E0E0E0','stroke-width':'1',rx:'8'}));
+      const emSz=Math.min(tw*.55, th*.4, 32);
+      g2.appendChild(se('text',{x:tx+tw/2,y:ty+th*.48,'text-anchor':'middle',
+        'dominant-baseline':'middle','font-size':emSz,opacity:'.12'},a.e));
+      g2.appendChild(se('text',{x:tx+tw/2,y:ty+th*.82,'text-anchor':'middle',
+        'font-family':'Nunito,sans-serif','font-size':Math.max(emSz*.38,7),fill:'#BBB'},'adoptowane'));
+      svg.appendChild(g2);
+      return;
+    }
+
+    // Efekt stosu — kilka warstw kart z przesunięciem (maks qty=3)
+    const stackN=Math.min(a.qty, 3);
+    for(let s=stackN-1;s>=0;s--){
+      const off=s*2.5;
+      const gcard=se('linearGradient',{id:`cg${i}${s}`,x1:'0%',y1:'0%',x2:'0%',y2:'100%'});
+      gcard.appendChild(se('stop',{'offset':'0%','stop-color':'#FFFFFF'}));
+      gcard.appendChild(se('stop',{'offset':'100%','stop-color':'#FFF0DC'}));
+      defs.appendChild(gcard);
+      g2.appendChild(se('rect',{x:tx+off,y:ty+off,width:tw-off,height:th-off,
+        fill:`url(#cg${i}${s})`,stroke:s===0?'#D4956A':'#E8C8A0',
+        ['stroke-width']:s===0?'1.8':'1',rx:'7',
+        opacity: s===0?'1':s===1?'0.85':'0.65'}));
+    }
+
+    // Duże emoji — centralne
+    const emSz=Math.min(tw*.62, th*.46, 38);
+    g2.appendChild(se('text',{x:tx+tw/2,y:ty+th*.44,'text-anchor':'middle',
+      'dominant-baseline':'middle','font-size':emSz},a.e));
+
+    // Nazwa pod emoji
+    const nmSz=Math.max(Math.min(tw*.145, th*.12, 10.5), 7.5);
+    g2.appendChild(se('text',{x:tx+tw/2,y:ty+th*.72,'text-anchor':'middle',
+      'font-family':'Nunito,sans-serif','font-weight':'800','font-size':nmSz,fill:'#6B4020'},a.name));
+
+    // Punkty — lewy dolny
+    const ptSz=Math.max(nmSz*.88, 7);
+    g2.appendChild(se('text',{x:tx+5,y:ty+th-.5,'text-anchor':'start',
+      'dominant-baseline':'text-after-edge',
+      'font-family':'Nunito,sans-serif','font-weight':'800','font-size':ptSz,fill:'#9B7BC8'},`${a.pts}⭐`));
+
+    // Licznik ×N — prawy dolny, wyraźny
+    const badge=se('g',{});
+    const bw=ptSz*1.9, bh=ptSz*1.35, bx=tx+tw-bw-2, by_=ty+th-bh-2;
+    badge.appendChild(se('rect',{x:bx,y:by_,width:bw,height:bh,fill:'#E8833A',rx:'4'}));
+    badge.appendChild(se('text',{x:bx+bw/2,y:by_+bh/2,'text-anchor':'middle',
+      'dominant-baseline':'middle','font-family':'Nunito,sans-serif',
+      'font-weight':'800','font-size':ptSz*.88,fill:'white'},`×${a.qty}`));
+    g2.appendChild(badge);
+
+    svg.appendChild(g2);
+  });
+}
+function drawPawns(svg){
+  // Offsety pionków w polu (żeby nie nakładały się gdy kilku na tym samym polu)
+  const offs=[[.22,.22],[.62,.22],[.22,.60],[.62,.60],[.42,.40]];
+  G.players.forEach((p,i)=>{
+    const{x,y}=fxy(p.pos);const[ox,oy2]=offs[i]||[.42,.40];
+    const px=x+ox*CW, py=y+oy2*CH;
+    const r=Math.min(CW,CH)*0.22; // promień pionka proporcjonalny do pola
+    const g=se('g',{class:`pw${G.cur===i?' cpw':''}`,id:`pw-${i}`});
+    g.appendChild(se('ellipse',{cx:px,cy:py+r*0.9,rx:r*0.75,ry:r*0.28,fill:'rgba(0,0,0,0.18)'}));
+    g.appendChild(se('circle',{cx:px,cy:py,r,fill:p.color,stroke:'white',
+      'stroke-width':G.cur===i?'2.5':'1.5'}));
+    if(G.cur===i){
+      // Poświata dla aktywnego pionka
+      g.appendChild(se('circle',{cx:px,cy:py,r:r+3,fill:'none',stroke:p.color,
+        'stroke-width':'2',opacity:'0.4'}));
+    }
+    const emSize=Math.max(r*1.1, 9);
+    g.appendChild(se('text',{x:px,y:py+emSize*0.38,'text-anchor':'middle',
+      'dominant-baseline':'middle','font-size':emSize},p.emoji));
+    svg.appendChild(g);
+  });
+}
+function movePawn(idx){
+  const p=G.players[idx];const{x,y}=fxy(p.pos);
+  const offs=[[.22,.22],[.62,.22],[.22,.60],[.62,.60],[.42,.40]];
+  const[ox,oy2]=offs[idx]||[.42,.40];
+  const px=x+ox*CW, py=y+oy2*CH;
+  const pw=document.getElementById(`pw-${idx}`);if(!pw){drawBoard();return;}
+  const r=Math.min(CW,CH)*0.22;
+  const circles=pw.querySelectorAll('circle');
+  const ell=pw.querySelector('ellipse');
+  const txt=pw.querySelector('text');
+  if(circles[0]){circles[0].setAttribute('cx',px);circles[0].setAttribute('cy',py);}
+  if(circles[1]){circles[1].setAttribute('cx',px);circles[1].setAttribute('cy',py);}
+  if(ell){ell.setAttribute('cx',px);ell.setAttribute('cy',py+r*0.9);}
+  if(txt){txt.setAttribute('x',px);txt.setAttribute('y',py+Math.max(r*1.1,9)*0.38);}
+  pw.setAttribute('class',`pw${G.cur===idx?' cpw':''}`);
+}
+
+// ═══ SIDEBAR & HINTS ════════════════════════════════════════════
+function renderSidebar(){
+  if(!G)return;
+  document.getElementById('sb-round').textContent=`Runda ${G.round}`;
+  document.getElementById('top-round').textContent=`Runda ${G.round}`;
+  const p=cp();
+  document.getElementById('top-turn').textContent=`Tura: ${p.emoji} ${p.n}${p.ai?' (AI)':''}`;
+  document.getElementById('top-phase').textContent=G.phase==='roll'?'Rzut 🎲':'Akcja ✅';
+  document.getElementById('top-phase').className=`phase-badge ${G.phase==='roll'?'ph-roll':'ph-act'}`;
+  const pl=document.getElementById('players-list');pl.innerHTML='';
+  G.players.forEach((p2,i)=>{
+    const d=document.createElement('div');d.className=`pc${i===G.cur?' cur':''}`;
+    const isCur=i===G.cur&&G.phase==='acted';
+    const hd=p2.hand.map((c,ci)=>{
+      const name=c==='joker'?'🃏 Joker':CNAMES[c];
+      // Tylko aktualny gracz może kliknąć swoje karty
+      if(isCur){
+        return`<span class="chip${c==='joker'?' j':''} chip-btn" onclick="showCardInfo('${c}',${ci})" title="Kliknij żeby zobaczyć szczegóły">${name}</span>`;
+      }
+      return`<span class="chip${c==='joker'?' j':''}">${name}</span>`;
+    }).join('');
+    const anim=p2.adopted.map(a=>`<span title="${a.name}">${a.e}</span>`).join('');
+    d.innerHTML=`<div class="pc-top"><div class="pc-dot" style="background:${p2.color}"></div>
+      <div class="pc-name">${p2.emoji} ${p2.n}${p2.ai?' 🤖':''}</div>
+      <span class="pc-sn ${p2.sn?'on':'off'}">${p2.sn?'☀️●':'☀️○'}</span>
+      <div class="pc-pts">${p2.pts}⭐</div></div>
+      <div class="pc-hand">${hd||'<span style="opacity:.32;font-size:.62rem">brak kart</span>'}</div>
+      <div class="pc-animals">${anim}</div>
+      ${p2.skip?'<span class="pc-skip">💤 pomija turę</span>':''}`;
+    pl.appendChild(d);
+  });updateHint();
+}
+function renderLog(){const el=document.getElementById('log-div');if(!G||!G._log)return;
+  el.innerHTML=G._log.slice(0,18).map(e=>`<div class="log-e ${e.type}">${e.txt}</div>`).join('');}
+function updateHint(){
+  if(!G)return;const p=cp();const ft=ftype(p.pos);const hb=document.getElementById('hint-body');
+  let hints=[];
+  if(G.phase==='roll'){
+    hints=[{i:'🎲',t:'Naciśnij „Rzuć kostką" żeby zacząć turę.'},
+      {i:'📌',t:`Pole ${p.pos}. Kart: ${p.hand.length}/5. W schronisku: ${left()} zwierząt.`}];
+    if(p.hand.length>=3)hints.push({i:'💡',t:'Masz dużo kart! Szukaj pola 🐾 Schronisko żeby adoptować.'});
+    if(p.sn)hints.push({i:'☀️',t:'Żeton SN aktywny! Użyj przy adopcji żeby pominąć 1 brakującą kartę.'});
+    const soon=G.shelter.filter(a=>a.qty>0&&checkAdopt(p,a).can);
+    if(soon.length)hints.push({i:'🎉',t:`Możesz teraz adoptować: ${soon.slice(0,3).map(a=>a.e+a.name).join(', ')}`});
+  }else{
+    const atS=ft==='schron';
+    if(atS&&!p.noAdopt){
+      const can=G.shelter.filter(a=>a.qty>0&&checkAdopt(p,a).can);
+      if(can.length)hints.push({i:'🎉',t:`Jesteś na Schronisku! Kliknij „Adoptuj zwierzę". Możesz wziąć: ${can.map(a=>a.e+a.name).join(', ')}`});
+      else hints.push({i:'😞',t:'Jesteś na Schronisku, ale nie masz pasujących kart. Zbierz potrzebne karty Warunków.'});
+    }else if(p.noAdopt)hints.push({i:'🔧',t:'Remont klatki — nie możesz adoptować tej tury.'});
+    else hints.push({i:'📍',t:`Stoisz na: ${ft}. Akcja już wykonana.`});
+    hints.push({i:'➡️',t:'Naciśnij „Zakończ turę" gdy skończysz.'});
+  }
+  hb.innerHTML=hints.map(h=>`<div class="hi"><span class="hi-icon">${h.i}</span><span>${h.t}</span></div>`).join('');
+}
+function toggleHint(){document.getElementById('hint-box').classList.toggle('col');}
+function updateButtons(){
+  if(!G)return;const p=cp();
+  const rb=document.getElementById('roll-btn'),ab=document.getElementById('adopt-btn'),eb=document.getElementById('end-btn');
+  rb.disabled=G.phase!=='roll';eb.disabled=G.phase!=='acted';
+  const atS=ftype(p.pos)==='schron';
+  ab.disabled=!(G.phase==='acted'&&atS&&!p.noAdopt&&left()>0);
+  rb.textContent=p.ai?'🤖 AI gra...':'🎲 Rzuć kostką';
+}
+
+// ═══ DICE ═══════════════════════════════════════════════════════
+function randDice(){return Math.floor(Math.random()*6)+1;}
+async function rollDice(){
+  if(G.over||G.phase!=='roll')return;const p=cp();if(p.ai)return;
+  const faces=['⚀','⚁','⚂','⚃','⚄','⚅'];const dEl=document.getElementById('dice');
+  sndDice();
+  dEl.classList.add('roll');const iv=setInterval(()=>dEl.textContent=faces[Math.floor(Math.random()*6)],70);
+  await sleep(480);clearInterval(iv);dEl.classList.remove('roll');
+  const val=randDice();dEl.textContent=faces[val-1];
+  log(G,`${p.emoji} ${p.n} rzuca: ${val}`,'');toast(`🎲 Wyrzucono: ${val}`);
+  await movePlayer(p,val);
+}
+async function aiRoll(){
+  const p=cp();const faces=['⚀','⚁','⚂','⚃','⚄','⚅'];const dEl=document.getElementById('dice');
+  log(G,`🤖 ${p.n} myśli...`,'');await sleep(700+Math.floor(Math.random()*400));
+  sndDice();
+  dEl.classList.add('roll');const iv=setInterval(()=>dEl.textContent=faces[Math.floor(Math.random()*6)],70);
+  await sleep(480);clearInterval(iv);dEl.classList.remove('roll');
+  const val=randDice();dEl.textContent=faces[val-1];
+  log(G,`${p.emoji} ${p.n} rzuca: ${val}`,'');toast(`🤖 ${p.n}: ${val}`);
+  await movePlayer(p,val);
+}
+async function movePlayer(p,steps){
+  for(let s=1;s<=steps;s++){
+    p.pos=(p.pos+1)%48;movePawn(p.id);sndStep();await sleep(95);
+    if(p.pos===0){draw(G,p,1);log(G,`${p.n} przez START — bonus!`,'good');toast('⭐ Bonus!','good');sndLand('start');}
+  }
+  sndLand(ftype(p.pos));
+  G.phase='acted';renderSidebar();await sleep(150);await runField(p);
+}
+async function runField(p){
+  const ft=ftype(p.pos);log(G,`${p.emoji} ${p.n} → ${ft}`,'');
+  if(ft==='dom'){
+    const before=p.hand.length;
+    draw(G,p,1);
+    log(G,`${p.n} dobiera 1 kartę.`,'good');
+    if(!p.ai && p.hand.length>before){
+      const newCard=p.hand[p.hand.length-1];
+      await showNewCardModal(p, [newCard], 'Dom');
+    } else toast('🏡 +1 karta!','good');
+  }
+  else if(ft==='bonus'){
+    const before=p.hand.length;
+    draw(G,p,2);
+    log(G,`${p.n} — BONUS! +2 karty!`,'good');
+    if(!p.ai){
+      const newCards=p.hand.slice(Math.max(0,before));
+      if(newCards.length>0) await showNewCardModal(p, newCards, 'Bonus');
+      else toast('🌟 BONUS +2!','good');
+    }
+  }
+  else if(ft==='quiz'){
+    if(!p.ai) await doQuiz(p);
+    else {
+      // AI losowo odpowiada poprawnie w 60% przypadków
+      if(Math.random()<0.6){draw(G,p,1);log(G,`🤖 ${p.n} odpowiada poprawnie!`,'good');}
+      else log(G,`🤖 ${p.n} odpowiada błędnie.`,'bad');
+    }
+  }
+  else if(ft==='wydar'){renderSidebar();await doEvent(p);return;}
+  else if(ft==='schron'){log(G,`${p.n} staje na SCHRONISKU!`,'hl');toast('🐾 Możesz adoptować!','good');}
+  else if(ft==='odp'){p.skip=true;log(G,`${p.n} odpoczynek — pomija kolejną.`,'bad');toast('💤 Odpoczynek','bad');}
+  renderSidebar();updateButtons();updateHint();
+  if(p.ai)await aiDecide(p);
+}
+
+// ═══ QUIZ MODAL ═════════════════════════════════════════════════
+async function doQuiz(p){
+  // Dobierz pytanie z talii
+  if(G.qdeck.length===0){
+    G.qdeck=shuffle(G.qdisc);G.qdisc=[];
+    toast('🔄 Tasujemy pytania od nowa','info');
+  }
+  if(G.qdeck.length===0){toast('Brak pytań!','info');return;}
+
+  const q=G.qdeck.pop();G.qdisc.push(q);
+  const lvLabel=q.lv==='k'
+    ?'<span style="background:#E8F8ED;color:#3D8B57;border-radius:12px;padding:2px 9px;font-size:.68rem;font-weight:800">🧒 Dla dzieci</span>'
+    :'<span style="background:#EDE8FA;color:#5B3A9B;border-radius:12px;padding:2px 9px;font-size:.68rem;font-weight:800">🎓 Dla dorosłych</span>';
+
+  // Opcje odpowiedzi z losowym shufflem (zachowujemy indeks poprawnej)
+  const shuffled=q.a.map((txt,i)=>({txt,correct:i===q.c}));
+  // NIE tasujemy — zachowujemy oryginalne ABCD żeby łatwiej grać
+
+  const optLetters=['A','B','C','D'];
+  const optsHtml=q.a.map((txt,i)=>`
+    <button class="quiz-opt" id="qo-${i}" onclick="pickQuizOpt(${i},${q.c})">
+      <span class="quiz-letter">${optLetters[i]}</span>
+      <span class="quiz-txt">${txt}</span>
+    </button>`).join('');
+
+  const statsLine=quizStats.correct+quizStats.wrong>0
+    ?`<div style="font-size:.7rem;color:var(--gray);text-align:center;margin-bottom:8px">Twój wynik w tej grze: ✅ ${quizStats.correct} / ❌ ${quizStats.wrong}</div>`
+    :'';
+
+  window._quizAnswered=false;
+  await showModal(`
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <div class="m-icon" style="font-size:2rem;margin:0">❓</div>
+      ${lvLabel}
+    </div>
+    <div class="m-title" style="font-size:1.1rem;margin-bottom:14px;text-align:left;line-height:1.4">${q.q}</div>
+    ${statsLine}
+    <div id="quiz-opts" style="display:flex;flex-direction:column;gap:7px;margin-bottom:14px">
+      ${optsHtml}
+    </div>
+    <div id="quiz-result" style="min-height:20px"></div>
+    <div class="m-btns" style="margin-top:10px">
+      <button class="mbtn can" id="quiz-close" style="display:none" onclick="closeModal('done')">Zakończ turę ➡️</button>
+    </div>`);
+}
+
+window._quizAnswered=false;
+window.pickQuizOpt=function(chosen, correct){
+  if(window._quizAnswered)return;
+  window._quizAnswered=true;
+  const p=cp();
+  const isCorrect=chosen===correct;
+
+  // Podświetl odpowiedzi
+  document.querySelectorAll('.quiz-opt').forEach((btn,i)=>{
+    btn.disabled=true;
+    if(i===correct){
+      btn.style.background='#E8F8ED';btn.style.borderColor='#5BAD72';
+      btn.querySelector('.quiz-letter').style.background='#5BAD72';
+    } else if(i===chosen&&!isCorrect){
+      btn.style.background='#FEF0F0';btn.style.borderColor='#E87D7D';
+      btn.querySelector('.quiz-letter').style.background='#E87D7D';
+    }
+  });
+
+  const resEl=document.getElementById('quiz-result');
+  if(isCorrect){
+    quizStats.correct++;
+    // Dobierz kartę
+    const before=p.hand.length;
+    draw(G,p,1);
+    const newCard=p.hand.length>before?p.hand[p.hand.length-1]:null;
+    const cardName=newCard?(newCard==='joker'?'🃏 Joker':CNAMES[newCard]):'brak (limit ręki)';
+    resEl.innerHTML=`<div style="background:#E8F8ED;border-radius:9px;padding:10px 14px;text-align:center">
+      <div style="font-size:1.5rem">🎉</div>
+      <div style="font-weight:800;color:#3D8B57;font-size:.95rem">Poprawnie!</div>
+      <div style="font-size:.8rem;color:#5C3D20;margin-top:4px">Dostajesz kartę: <strong>${cardName}</strong></div>
+    </div>`;
+    log(G,`✅ ${p.n} odpowiada poprawnie! +1 karta (${cardName})`,'good');
+    toast('✅ Poprawnie! +1 karta','good');
+    renderSidebar();
+  } else {
+    quizStats.wrong++;
+    const correctAns=document.querySelectorAll('.quiz-opt')[correct]?.querySelector('.quiz-txt')?.textContent||'';
+    resEl.innerHTML=`<div style="background:#FEF0F0;border-radius:9px;padding:10px 14px;text-align:center">
+      <div style="font-size:1.5rem">😞</div>
+      <div style="font-weight:800;color:#C0392B;font-size:.95rem">Niestety, błąd!</div>
+      <div style="font-size:.8rem;color:#5C3D20;margin-top:4px">Prawidłowa odpowiedź: <strong>${correctAns}</strong></div>
+      <div style="font-size:.75rem;color:var(--gray);margin-top:3px">Nie dostajesz karty, ale wiesz już na przyszłość! 💪</div>
+    </div>`;
+    log(G,`❌ ${p.n} odpowiada błędnie.`,'bad');
+    toast('❌ Błąd — brak karty','bad');
+  }
+
+  // Pokaż przycisk zamknięcia
+  const closeBtn=document.getElementById('quiz-close');
+  if(closeBtn)closeBtn.style.display='block';
+};
+
+// Modal "dostałeś kartę!" — pokazuje nowe karty z opisem
+async function showNewCardModal(p, newCards, fieldName){
+  const cardsHtml=newCards.map(c=>{
+    const info=COND_INFO[c];
+    if(!info)return '';
+    // Sprawdź do czego ta karta jest teraz potrzebna
+    const useful=G.shelter.filter(a=>a.qty>0&&a.reqs.includes(c));
+    const usefulStr=useful.length?`<div style="font-size:.72rem;color:var(--grn2);margin-top:5px">🐾 Przydatna do: ${useful.map(a=>a.e+' '+a.name).join(', ')}</div>`:'';
+    return`<div style="background:#F8F6FF;border:1.5px solid #C8BFEE;border-radius:10px;padding:10px 12px;margin-bottom:8px">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="font-size:1.8rem">${info.icon}</span>
+        <div>
+          <div style="font-weight:800;font-size:.9rem;color:var(--brn2)">${info.name}</div>
+          <div style="font-size:.76rem;color:var(--brown);margin-top:2px">${info.desc}</div>
+          <div style="font-size:.72rem;color:var(--blue);margin-top:3px">Dla: ${info.for}</div>
+          ${usefulStr}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+  const icon=fieldName==='Bonus'?'🌟':'🏡';
+  const title=fieldName==='Bonus'?`BONUS! Dostałeś ${newCards.length} karty`:`Dostałeś kartę — ${fieldName}`;
+  await showModal(`
+    <div class="m-icon">${icon}</div>
+    <div class="m-title">${title}</div>
+    <div class="m-sub">Masz teraz ${p.hand.length}/5 kart w ręce</div>
+    ${cardsHtml}
+    <div class="m-btns"><button class="mbtn ok" onclick="closeModal('ok')">Super, gram dalej! 👍</button></div>`);
+}
+
+// ═══ EVENTS ═════════════════════════════════════════════════════
+async function doEvent(p){
+  if(!G.edeck.length){updateButtons();updateHint();if(p.ai)await aiDecide(p);return;}
+  const ev=G.edeck.pop();G.edisc.push(ev);log(G,`${p.n} losuje: ${ev.name}`,'');
+  const tc={pos:'positive',neg:'negative',neu:'neutral'};
+  const tl={pos:'Pozytywna 🟢',neg:'Trudna 🔴',neu:'Neutralna 🟡'};
+  if(!p.ai){
+    await showModal(`<div class="m-icon">${ev.e}</div>
+      <div class="m-title">${ev.name}</div>
+      <div class="card-box ${tc[ev.type]}">
+        <div class="ct">${tl[ev.type]||''}</div>
+        <div class="cn">${ev.name}</div>
+        <div class="cd">${ev.desc}</div>
+      </div>
+      <div class="m-btns"><button class="mbtn ok" onclick="closeModal('ok')">OK, rozumiem</button></div>`);
+  }else await sleep(250);
+  ev.run(G,p);renderSidebar();
+  if(G.pending==='lose_card'){G.pending=null;if(p.hand.length>0){if(p.ai)aiLose(p);else await doLoseCard(p);}}
+  else if(G.pending==='trade'){G.pending=null;const ot=G.players.filter(x=>x.id!==p.id&&x.hand.length>0);if(ot.length&&p.hand.length){if(p.ai)aiTrade(p);else await doTrade(p);}}
+  else if(G.pending==='gift'){G.pending=null;const ot=G.players.filter(x=>x.id!==p.id&&x.hand.length>0);if(ot.length){if(p.ai)aiGift(p);else await doGift(p);}}
+  renderSidebar();
+  if(G.extraRoll){G.extraRoll=false;G.phase='roll';renderSidebar();updateButtons();updateHint();
+    toast('🎲 Dodatkowy rzut!','good');if(p.ai){await sleep(400);await aiRoll();}return;}
+  updateButtons();updateHint();if(p.ai)await aiDecide(p);
+}
+
+// ── Lose card ─────────────────────────────────────────────────
+async function doLoseCard(p){
+  if(!p.hand.length)return;
+  window._lcSel=null;
+  const html=`<div class="m-icon">🏥</div>
+    <div class="m-title">Weterynarz</div>
+    <div class="m-text">Wybierz kartę do oddania:</div>
+    <div class="hand-chips" id="lcc">${p.hand.map((c,i)=>`<button class="hchip" onclick="lcPick(${i})">${c==='joker'?'🃏 Joker':CNAMES[c]}</button>`).join('')}</div>
+    <div class="m-btns"><button class="mbtn ok" id="lc-ok" disabled onclick="lcConfirm()">Oddaj</button></div>`;
+  await showModal(html);
+}
+window.lcPick=i=>{window._lcSel=i;document.querySelectorAll('#lcc .hchip').forEach((b,j)=>b.classList.toggle('sel',j===i));const ok=document.getElementById('lc-ok');if(ok)ok.disabled=false;};
+window.lcConfirm=function(){const p=cp();const i=window._lcSel;if(i==null)return;
+  const c=p.hand.splice(i,1)[0];if(c!=='joker')G.cdisc.push(c);
+  log(G,`${p.n} oddaje ${CNAMES[c]||c}.`,'bad');window._lcSel=null;closeModal('ok');renderSidebar();};
+function aiLose(p){const ni=p.hand.findIndex(c=>c!=='joker');
+  const c=ni>=0?p.hand.splice(ni,1)[0]:p.hand.shift();if(c!=='joker')G.cdisc.push(c);log(G,`${p.n} oddaje kartę.`,'bad');}
+
+// ── Trade ─────────────────────────────────────────────────────
+async function doTrade(p){
+  const others=G.players.filter(x=>x.id!==p.id&&x.hand.length>0);
+  window._tpSel=null;window._tmSel=null;
+  const oHtml=others.map(o=>`<button class="pbtn" id="tp-${o.id}" onclick="selTP(${o.id})">
+    <div style="width:17px;height:17px;border-radius:50%;background:${o.color};flex-shrink:0"></div>
+    <span style="font-weight:800">${o.emoji} ${o.n}</span>
+    <span style="font-size:.7rem;opacity:.55;margin-left:auto">${o.hand.length} kart</span>
+  </button>`).join('');
+  const mHtml=p.hand.map((c,i)=>`<button class="hchip" onclick="selMT(${i})">${c==='joker'?'🃏':CNAMES[c]}</button>`).join('');
+  await showModal(`<div class="m-icon">🔄</div>
+    <div class="m-title">Wymiana doświadczeń</div>
+    <div class="m-sub">Wybierz gracza i swoją kartę</div>
+    <div class="plist" id="tpl">${oHtml}</div>
+    <div style="font-size:.76rem;font-weight:700;color:var(--brn2);margin-bottom:5px">Twoja karta do wymiany:</div>
+    <div class="hand-chips" id="tmy">${mHtml}</div>
+    <div class="m-btns">
+      <button class="mbtn can" onclick="closeModal('skip')">Pomiń</button>
+      <button class="mbtn ok" id="t-ok" disabled onclick="tradeConfirm()">Zaproponuj!</button>
+    </div>`);
+}
+window._tpSel=null;window._tmSel=null;
+window.selTP=id=>{window._tpSel=id;document.querySelectorAll('#tpl .pbtn').forEach(b=>b.classList.toggle('sel',b.id===`tp-${id}`));checkTO();};
+window.selMT=i=>{window._tmSel=i;document.querySelectorAll('#tmy .hchip').forEach((b,j)=>b.classList.toggle('sel',j===i));checkTO();};
+function checkTO(){const ok=document.getElementById('t-ok');if(ok)ok.disabled=!(window._tpSel!=null&&window._tmSel!=null);}
+window.tradeConfirm=async function(){
+  const p=cp();const target=G.players.find(x=>x.id===window._tpSel);
+  if(!target||window._tmSel==null){closeModal('skip');return;}
+  let agrees=target.ai;
+  if(!target.ai){
+    const myCard=p.hand[window._tmSel];const mcn=myCard==='joker'?'🃏 Joker':CNAMES[myCard];
+    const r=await showModal(`<div class="m-icon">${target.emoji}</div>
+      <div class="m-title">Propozycja wymiany</div>
+      <div class="m-text" style="text-align:center">
+        <b>${p.emoji} ${p.n}</b> chce dać Ci: <b>${mcn}</b><br>W zamian prosi o jedną Twoją kartę.<br>
+        <span style="font-size:.75rem;color:var(--brown)">Telefon przekazuje graczowi ${target.n}</span>
+      </div>
+      <div class="m-btns">
+        <button class="mbtn can" onclick="closeModal('no')">Odmawiam</button>
+        <button class="mbtn go" onclick="closeModal('ok')">Zgadzam się</button>
+      </div>`);
+    agrees=r==='ok';
+  }
+  if(agrees&&target.hand.length>0){
+    const mc=p.hand.splice(window._tmSel,1)[0];
+    const ti=0|Math.random()*target.hand.length;const tc=target.hand.splice(ti,1)[0];
+    p.hand.push(tc);target.hand.push(mc);clamp(G,p);clamp(G,target);
+    log(G,`${p.n} wymienia z ${target.n}.`,'good');toast('🔄 Wymiana!','good');
+  }else{log(G,`${target.n} odmawia.`,'');toast(`❌ ${target.n} odmawia`,'');}
+  window._tpSel=null;window._tmSel=null;closeModal('ok');renderSidebar();
+};
+function aiTrade(p){const others=G.players.filter(x=>x.id!==p.id&&x.hand.length>0);if(!others.length||!p.hand.length)return;
+  const t=others[0];const ni=p.hand.findIndex(c=>c!=='joker');if(ni<0)return;
+  const mc=p.hand.splice(ni,1)[0];const ti=0|Math.random()*t.hand.length;const tc=t.hand.splice(ti,1)[0];
+  p.hand.push(tc);t.hand.push(mc);clamp(G,p);clamp(G,t);log(G,`${p.n} wymienia z ${t.n}.`,'good');}
+
+// ── Gift ─────────────────────────────────────────────────────
+async function doGift(p){
+  const others=G.players.filter(x=>x.id!==p.id&&x.hand.length>0);
+  window._gpSel=null;
+  const oHtml=others.map(o=>`<button class="pbtn" id="gp-${o.id}" onclick="selGP(${o.id})">
+    <div style="width:17px;height:17px;border-radius:50%;background:${o.color};flex-shrink:0"></div>
+    <span style="font-weight:800">${o.emoji} ${o.n}</span>
+  </button>`).join('');
+  await showModal(`<div class="m-icon">🎁</div>
+    <div class="m-title">Prezent od sąsiada</div>
+    <div class="m-sub">Wybierz gracza i poproś o kartę. Może odmówić!</div>
+    <div class="plist" id="gpl">${oHtml}</div>
+    <div class="m-btns">
+      <button class="mbtn can" onclick="closeModal('skip')">Pomiń</button>
+      <button class="mbtn ok" id="g-ok" disabled onclick="giftConfirm()">Poproś!</button>
+    </div>`);
+}
+window._gpSel=null;window._gcSel=null;
+window.selGP=id=>{window._gpSel=id;document.querySelectorAll('#gpl .pbtn').forEach(b=>b.classList.toggle('sel',b.id===`gp-${id}`));const ok=document.getElementById('g-ok');if(ok)ok.disabled=false;};
+window.giftConfirm=async function(){
+  const p=cp();const target=G.players.find(x=>x.id===window._gpSel);if(!target){closeModal('skip');return;}
+  let agrees=target.ai,tIdx=null;
+  if(!target.ai){
+    window._gcSel=null;
+    const cHtml=target.hand.map((c,i)=>`<button class="hchip" id="gc-${i}" onclick="selGC(${i})">${c==='joker'?'🃏 Joker':CNAMES[c]}</button>`).join('');
+    const r=await showModal(`<div class="m-icon">${target.emoji}</div>
+      <div class="m-title">${p.emoji} ${p.n} prosi o kartę!</div>
+      <div class="m-sub">Wybierz kartę do dania lub odmów.<br><small style="color:var(--brown)">Telefon przekazuje graczowi ${target.n}</small></div>
+      <div class="hand-chips" id="gcs">${cHtml}</div>
+      <div class="m-btns">
+        <button class="mbtn can" onclick="closeModal('no')">Odmawiam</button>
+        <button class="mbtn go" id="gc-ok" disabled onclick="closeModal('give')">Daję tę kartę</button>
+      </div>`);
+    agrees=r==='give';tIdx=window._gcSel;
+  }else{agrees=Math.random()<.65||target.hand.length>=4;if(agrees)tIdx=0|Math.random()*target.hand.length;}
+  if(agrees&&target.hand.length>0&&tIdx!=null){
+    const c=target.hand.splice(tIdx,1)[0];p.hand.push(c);clamp(G,p);
+    log(G,`${target.n} daje kartę ${p.n}.`,'good');toast(`🎁 ${target.n} daje kartę!`,'good');
+  }else{log(G,`${target.n} odmawia.`,'');toast(`❌ ${target.n} odmawia`,'');}
+  window._gpSel=null;window._gcSel=null;closeModal('ok');renderSidebar();
+};
+window.selGC=function(i){window._gcSel=i;document.querySelectorAll('#gcs .hchip').forEach((b,j)=>b.classList.toggle('sel',j===i));const ok=document.getElementById('gc-ok');if(ok)ok.disabled=false;};
+function aiGift(p){const others=G.players.filter(x=>x.id!==p.id&&x.hand.length>0);if(!others.length)return;
+  const t=others[0];if(Math.random()<.65){const i=0|Math.random()*t.hand.length;const c=t.hand.splice(i,1)[0];p.hand.push(c);clamp(G,p);log(G,`${t.n} daje kartę ${p.n}.`,'good');}
+  else log(G,`${t.n} odmawia.`,'');}
+
+// ═══ ADOPT ══════════════════════════════════════════════════════
+async function openAdopt(){
+  if(!G||G.phase!=='acted')return;const p=cp();
+  if(p.noAdopt){toast('🔧 Remont — brak adopcji!','bad');return;}
+  if(ftype(p.pos)!=='schron'){toast('Musisz stać na SCHRONISKU.','bad');return;}
+  const avail=G.shelter.filter(a=>a.qty>0);
+  if(!avail.length){
+    await showModal(`<div class="m-icon">🏚️</div>
+      <div class="m-title">Schronisko puste!</div>
+      <div class="m-text" style="text-align:center">Wszystkie zwierzęta znalazły już dom. Gra zaraz się kończy!</div>
+      <div class="m-btns"><button class="mbtn can" onclick="closeModal('ok')">Zamknij</button></div>`);
+    return;
+  }
+  const dc=p.adopted.filter(a=>a.id==='dog_big'||a.id==='dog_sml').length;
+  const anyAdoptable=avail.some(a=>{
+    const isDog=a.id==='dog_big'||a.id==='dog_sml';
+    return !(isDog&&dc>=2) && checkAdopt(p,a).can;
+  });
+  const grid=avail.map(a=>{
+    const isDog=a.id==='dog_big'||a.id==='dog_sml';const db=isDog&&dc>=2;
+    const ch=checkAdopt(p,a);const canA=ch.can&&!db;
+    const rstr=a.reqs.map(r=>CNAMES[r]).join(', ');
+    let ex='';if(db)ex='<span style="color:var(--pink);font-size:.56rem">⚠ Limit 2 psów</span>';
+    else if(!ch.can)ex=`<span style="color:var(--pink);font-size:.56rem">⚠ Brak: ${ch.missing.map(r=>CNAMES[r]).join(', ')}</span>`;
+    else{if(ch.jUsed)ex+=`<span style="color:var(--purp);font-size:.58rem">🃏×${ch.jUsed} </span>`;if(ch.snUsed)ex+=`<span style="color:var(--yell);font-size:.58rem">☀️SN</span>`;}
+    // niedostępne zwierzęta są szare ale klikalne żeby zobaczyć co brakuje
+    return`<div class="aopt ${canA?'ok':'not-yet'}" id="ao-${a.id}" onclick="pickA('${a.id}')">
+      <div class="ck">✓</div><span class="ae">${a.e}</span>
+      <div class="an">${a.name}</div><div class="ap">${a.pts} pkt ×${a.qty}</div>
+      <div class="ar">${rstr}</div>${ex?`<div style="margin-top:2px">${ex}</div>`:''}
+    </div>`;
+  }).join('');
+  const mh=p.hand.length
+    ?`<div style="font-size:.76rem;color:var(--brown);font-weight:700;margin-bottom:9px">Twoje karty: ${p.hand.map(c=>c==='joker'?'🃏 Joker':CNAMES[c]).join(' · ')}</div>`
+    :`<div style="background:#FEF0F0;border:1.5px solid var(--pink);border-radius:8px;padding:8px 12px;margin-bottom:9px;font-size:.78rem;color:#7B1515">
+        ⚠ <strong>Nie masz żadnych kart Warunków.</strong><br>
+        Musisz najpierw zdobyć karty — lądując na polach <b>🏡 Dom</b> lub <b>🌟 Bonus</b>.
+      </div>`;
+  const infoTxt=anyAdoptable
+    ?'Kliknij zielone zwierzę (✓) żeby adoptować. Szare — nie masz jeszcze wymaganych kart.'
+    :'Nie masz teraz kart na żadne zwierzę. Kliknij zwierzę żeby zobaczyć czego brakuje.';
+  window._aSel=null;
+  await showModal(`<div class="m-icon">🐾</div><div class="m-title">Schronisko</div>
+    ${mh}<div class="agrid">${grid}</div>
+    <div id="ao-info" style="text-align:center;font-size:.74rem;color:var(--gray);margin-bottom:11px">${infoTxt}</div>
+    <div class="m-btns">
+      <button class="mbtn can" onclick="closeModal('cancel')">✕ Zamknij</button>
+      <button class="mbtn go" id="ao-ok" disabled onclick="adoptConfirm()">🐾 Adoptuj!</button>
+    </div>`);
+}
+window._aSel=null;
+window.pickA=function(id){
+  const p=cp();const a=G.shelter.find(x=>x.id===id);if(!a||!a.qty)return;
+  const isDog=id==='dog_big'||id==='dog_sml';
+  const dc=p.adopted.filter(x=>x.id==='dog_big'||x.id==='dog_sml').length;
+  const dogBlocked=isDog&&dc>=2;
+  const ch=checkAdopt(p,a);
+  // Zawsze pokaż info w ao-info — nawet gdy nie można adoptować
+  const inf=document.getElementById('ao-info');
+  if(!ch.can||dogBlocked){
+    // Kliknięto niedostępne — pokaż info co brakuje
+    document.querySelectorAll('.aopt').forEach(el=>el.classList.remove('sel'));
+    const el=document.getElementById(`ao-${id}`);if(el)el.classList.add('sel');
+    if(inf){
+      if(dogBlocked){
+        inf.innerHTML=`<span style="color:var(--pink);font-weight:800">⚠ ${a.e} ${a.name}</span><br><span style="font-size:.69rem">Masz już 2 psy — to maksimum!</span>`;
+      }else{
+        const brak=ch.missing.map(r=>CNAMES[r]).join(', ');
+        const masz=a.reqs.filter(r=>!ch.missing.includes(r)).map(r=>CNAMES[r]).join(', ');
+        inf.innerHTML=`<span style="color:var(--orange);font-weight:800">${a.e} ${a.name} — ${a.pts} pkt</span><br>`
+          +(masz?`<span style="font-size:.68rem;color:var(--grn2)">✓ Masz: ${masz}</span><br>`:'')
+          +`<span style="font-size:.68rem;color:var(--pink)">✗ Brakuje: ${brak}</span>`;
+      }
+    }
+    return; // nie ustawiaj _aSel — nie można adoptować
+  }
+  // Można adoptować — zaznacz
+  window._aSel=id;
+  document.querySelectorAll('.aopt').forEach(el=>el.classList.remove('sel'));
+  const el=document.getElementById(`ao-${id}`);if(el)el.classList.add('sel');
+  const ok=document.getElementById('ao-ok');if(ok){ok.disabled=false;ok.textContent=`🐾 Adoptuj ${a.e} ${a.name}!`;}
+  if(inf){const rs=a.reqs.map(r=>CNAMES[r]).join(' + ');
+    let ex='';if(ch.jUsed)ex+=` | 🃏×${ch.jUsed}`;if(ch.snUsed)ex+=' | ☀️SN';
+    inf.innerHTML=`<span style="color:var(--grn2);font-weight:800">✓ ${a.e} ${a.name}</span> — ${a.pts} pkt<br><span style="font-size:.69rem">Zużyjesz: ${rs}${ex}</span>`;}
+};
+window.adoptConfirm=async function(){
+  if(!window._aSel)return;const p=cp();
+  const a=G.shelter.find(x=>x.id===window._aSel);if(!a||!a.qty)return;
+  const ch=checkAdopt(p,a);if(!ch.can)return;
+  let jLeft=ch.jUsed,snLeft=ch.snUsed?1:0;
+  for(const r of a.reqs){
+    const i=p.hand.indexOf(r);
+    if(i>=0)p.hand.splice(i,1);
+    else if(jLeft>0){const ji=p.hand.indexOf('joker');if(ji>=0){p.hand.splice(ji,1);jLeft--;}}
+    else if(snLeft>0){snLeft--;p.sn=false;}
+  }
+  a.qty--;const gained={...a};p.adopted.push(gained);p.adoptedNow=gained;p.pts+=a.pts;
+  closeModal('adopt');window._aSel=null;
+  sndAdopt();
+  log(G,`${p.emoji} ${p.n} adoptuje ${a.e} ${a.name} — +${a.pts} pkt!`,'hl');
+  toast(`${a.e} ${a.name} adoptowany! +${a.pts} pkt`,'good');
+  await sleep(180);
+  await showModal(`<div class="m-icon">${a.e}</div>
+    <div class="m-title">${a.e} ${a.name} adoptowany!</div>
+    <div class="m-sub">+${a.pts} punkt${a.pts===1?'':'ów'} dla ${p.n} 🎉</div>
+    <div class="fact-box"><h4>🔍 Ciekawostka!</h4><p>${a.fact}</p></div>
+    <div class="m-btns"><button class="mbtn go" onclick="closeModal('ok')">Super! 🎉</button></div>`);
+  drawBoard();renderSidebar();updateButtons();updateHint();
+  if(!left()){await sleep(350);endGame();}
+};
+async function aiDecide(p){
+  if(G.phase!=='acted'){await endTurn();return;}
+  if(ftype(p.pos)==='schron'&&!p.noAdopt){
+    const avail=G.shelter.filter(a=>a.qty>0);
+    const dc=p.adopted.filter(a=>a.id==='dog_big'||a.id==='dog_sml').length;
+    let best=null,bp=0;
+    for(const a of avail){const isDog=a.id==='dog_big'||a.id==='dog_sml';if(isDog&&dc>=2)continue;
+      const ch=checkAdopt(p,a);if(ch.can&&a.pts>bp){best=a;bp=a.pts;}}
+    if(best){
+      await sleep(550);const a=best;const ch=checkAdopt(p,a);
+      let jL=ch.jUsed,snL=ch.snUsed?1:0;
+      for(const r of a.reqs){const i=p.hand.indexOf(r);if(i>=0)p.hand.splice(i,1);
+        else if(jL>0){const ji=p.hand.indexOf('joker');if(ji>=0){p.hand.splice(ji,1);jL--;}}
+        else if(snL>0){snL--;p.sn=false;}}
+      a.qty--;const gained={...a};p.adopted.push(gained);p.adoptedNow=gained;p.pts+=a.pts;
+      log(G,`🤖 ${p.n} adoptuje ${a.e} ${a.name} — +${a.pts} pkt!`,'hl');
+      toast(`🤖 ${a.e} AI adoptuje!`,'good');drawBoard();renderSidebar();
+      if(!left()){await sleep(300);endGame();return;}
+    }
+  }
+  await sleep(380);await endTurn();
+}
+
+// ═══ ANIMAL INFO POPUP (klik na zwierzę w schronisku) ════════════
+window.showAnimalInfo=async function(animalId){
+  if(!G)return;
+  const a=G.shelter.find(x=>x.id===animalId);
+  if(!a)return;
+  const p=cp();
+  const ch=checkAdopt(p,a);
+  const dc=p.adopted.filter(x=>x.id==='dog_big'||x.id==='dog_sml').length;
+  const isDog=a.id==='dog_big'||a.id==='dog_sml';
+  const dogBlocked=isDog&&dc>=2;
+
+  // Lista wymagań z zaznaczeniem co masz a czego nie
+  const reqRows=a.reqs.map(r=>{
+    const have=p.hand.includes(r)||p.hand.includes('joker');
+    // dokładniej: czy mamy tę konkretną kartę (nie joker)
+    const hasCard=p.hand.includes(r);
+    const hasJoker=p.hand.includes('joker');
+    const icon=hasCard?'✅':hasJoker?'🃏':'❌';
+    const col=hasCard?'var(--grn2)':hasJoker?'var(--purp)':'var(--pink)';
+    const note=hasCard?'masz':(hasJoker&&!ch.missing.includes(r))?'Joker':'brakuje';
+    return`<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #EEE">
+      <span style="font-size:1rem">${icon}</span>
+      <span style="flex:1;font-size:.82rem;font-weight:700">${CNAMES[r]}</span>
+      <span style="font-size:.72rem;color:${col};font-weight:700">${note}</span>
+    </div>`;
+  }).join('');
+
+  // Status ogólny
+  let statusBox='';
+  if(a.qty===0){
+    statusBox=`<div style="background:#FEF0F0;border-radius:8px;padding:8px 12px;margin-bottom:12px;font-size:.8rem;color:var(--pink);font-weight:700;text-align:center">
+      😢 To zwierzę zostało już adoptowane przez kogoś innego.
+    </div>`;
+  }else if(dogBlocked){
+    statusBox=`<div style="background:#FEF0F0;border-radius:8px;padding:8px 12px;margin-bottom:12px;font-size:.8rem;color:var(--pink);font-weight:700;text-align:center">
+      ⚠️ Masz już 2 psy — to maksymalna liczba dla jednego gracza.
+    </div>`;
+  }else if(ch.can){
+    let how='Masz wszystkie wymagane karty!';
+    if(ch.jUsed&&ch.snUsed)how=`Użyjesz Jokera×${ch.jUsed} i żetonu SN.`;
+    else if(ch.jUsed)how=`Użyjesz Jokera×${ch.jUsed}.`;
+    else if(ch.snUsed)how=`Użyjesz żetonu Słonecznej Niedzieli ☀️.`;
+    statusBox=`<div style="background:#E8F8ED;border-radius:8px;padding:8px 12px;margin-bottom:12px;font-size:.8rem;color:var(--grn2);font-weight:700;text-align:center">
+      ✅ Możesz adoptować to zwierzę! ${how}
+    </div>`;
+  }else{
+    const brakuje=ch.missing.map(r=>CNAMES[r]).join(', ');
+    statusBox=`<div style="background:#FFF8EE;border-radius:8px;padding:8px 12px;margin-bottom:12px;font-size:.8rem;color:var(--orange);text-align:center">
+      🎯 <strong>Brakuje:</strong> ${brakuje}<br>
+      <span style="font-size:.72rem">Ląduj na 🏡 Dom lub 🌟 Bonus żeby zebrać te karty.</span>
+    </div>`;
+  }
+
+  const alreadyOwn=p.adopted.filter(x=>x.id===a.id).length;
+  const qtyInfo=a.qty>0?`<span style="color:var(--orange)">×${a.qty} dostępnych</span>`:`<span style="color:var(--pink)">wyczerpane</span>`;
+  await showModal(`
+    <div class="m-icon">${a.e}</div>
+    <div class="m-title">${a.name}</div>
+    <div class="m-sub">${a.pts} punkt${a.pts===1?'':'ów'} za adopcję · ${qtyInfo}${alreadyOwn?` · masz już ${alreadyOwn}`:''}</div>
+    ${statusBox}
+    <div style="font-size:.78rem;font-weight:800;color:var(--brn2);margin-bottom:6px">Wymagane karty Warunków:</div>
+    <div style="margin-bottom:14px">${reqRows}</div>
+    <div class="fact-box"><h4>🔍 Ciekawostka!</h4><p>${a.fact}</p></div>
+    <div class="m-btns"><button class="mbtn can" onclick="closeModal('ok')">Zamknij</button>
+    ${ch.can&&!dogBlocked&&a.qty>0&&G.phase==='acted'&&ftype(p.pos)==='schron'&&!p.noAdopt
+      ?`<button class="mbtn go" onclick="closeModal('ok');openAdopt()">🐾 Adoptuj teraz!</button>`
+      :''
+    }
+    </div>`);
+};
+
+// CSS dla hover na zwierzętach w SVG
+const shelterStyle=document.createElement('style');
+shelterStyle.textContent=`.shelter-animal{transition:opacity .15s}.shelter-animal:hover rect{stroke:#5BAD72!important;stroke-width:2.5!important}`;
+document.head.appendChild(shelterStyle);
+
+// ═══ CARD INFO POPUP ════════════════════════════════════════════
+// Opisy dla każdego Warunku — co daje i dla jakich zwierząt
+const COND_INFO={
+  ogrod:{icon:'🌳',name:'Ogród / Podwórko',desc:'Przestrzeń na zewnątrz — zwierzę może biegać i wąchać świat.',for:'Pies duży 🐕, Królik 🐇'},
+  karma:{icon:'🥩',name:'Karma mięsna',desc:'Pełnowartościowe jedzenie dla mięsożerców — kupowane co miesiąc.',for:'Pies duży 🐕, Pies mały 🐩'},
+  czas:{icon:'⏰',name:'Dużo czasu',desc:'Codzienne spacery, zabawy, pieszczoty — te zwierzęta potrzebują Cię każdego dnia.',for:'Pies duży 🐕, Pies mały 🐩, Papuga 🦜'},
+  mieszkanie:{icon:'🏠',name:'Mieszkanie',desc:'Ciepły dom z kątem dla zwierzęcia — legowisko i poczucie bezpieczeństwa.',for:'Pies mały 🐩, Kot 🐈, Jeż 🦔'},
+  kuweta:{icon:'🪣',name:'Kuweta z piaskiem',desc:'Czysta kuweta to szczęśliwy kot. Wymieniaj żwirek regularnie!',for:'Kot 🐈'},
+  zabawki:{icon:'🧸',name:'Zabawki',desc:'Piłeczki, tunele, gryzaki — zabawki to nie luksus, to potrzeba!',for:'Kot 🐈, Chomik 🐹, Papuga 🦜, Jeż 🦔'},
+  klatka:{icon:'🏡',name:'Klatka / Terrarium',desc:'Bezpieczna przestrzeń do spania i jedzenia — własny kąt małego zwierzęcia.',for:'Chomik 🐹, Papuga 🦜, Żółw 🐢, Jeż 🦔, Królik 🐇'},
+  warzywa:{icon:'🥦',name:'Świeże warzywa',desc:'Marchewki, pietruszka, sałata — codzienna porcja zdrowia.',for:'Królik 🐇'},
+  akwarium:{icon:'🐟',name:'Akwarium',desc:'Szklany dom pełen wody, filtra i roślin — raj dla rybek.',for:'Rybki 🐠'},
+  lampa:{icon:'💡',name:'Lampa UV',desc:'Żółw bez lampy UV zachoruje — specjalistyczny sprzęt, ale warto!',for:'Żółw 🐢'},
+  joker:{icon:'🃏',name:'Joker Schroniska',desc:'Specjalna karta! Zastępuje <strong>dowolny 1 brakujący Warunek</strong> przy adopcji. Trzymaj do właściwego momentu.',for:'Każde zwierzę'},
+};
+
+window.showCardInfo=async function(cardKey,cardIdx){
+  if(!G)return;
+  const p=cp();
+  // Karty można podejrzeć w każdej fazie — tylko odłożenie wymaga fazy acted
+  const canDiscard=G.phase==='acted';
+  if(cardIdx>=p.hand.length)return;
+  const info=COND_INFO[cardKey];
+  if(!info)return;
+  // Sprawdź co ta karta odblokuje
+  let unlocks='';
+  if(cardKey!=='joker'){
+    const dc=p.adopted.filter(a=>a.id==='dog_big'||a.id==='dog_sml').length;
+    const useful=G.shelter.filter(a=>{
+      if(!a.qty)return false;
+      const isDog=a.id==='dog_big'||a.id==='dog_sml';
+      if(isDog&&dc>=2)return false;
+      // Ta karta jest potrzebna: bez niej nie można adoptować
+      if(!a.reqs.includes(cardKey))return false;
+      const handWithout=p.hand.filter((_,i)=>i!==cardIdx);
+      const tmpP={...p,hand:handWithout};
+      return !checkAdopt(tmpP,a).can;
+    });
+    if(useful.length){
+      unlocks+=`<div style="background:#E8F8ED;border-radius:8px;padding:7px 10px;margin-bottom:8px;font-size:.75rem;color:var(--grn2)">
+        <strong>💡 Ta karta potrzebna do:</strong> ${useful.map(a=>`${a.e} ${a.name} (${a.pts}pkt)`).join(', ')}
+      </div>`;
+    }
+    const canNow=G.shelter.filter(a=>a.qty>0&&checkAdopt(p,a).can);
+    if(canNow.length){
+      unlocks+=`<div style="background:#FFF8EE;border-radius:8px;padding:7px 10px;margin-bottom:8px;font-size:.75rem;color:var(--orange)">
+        <strong>🐾 Możesz już adoptować:</strong> ${canNow.map(a=>`${a.e} ${a.name}`).join(', ')}
+      </div>`;
+    }
+  }
+  const discardBtn=canDiscard
+    ?`<button class="mbtn" style="background:#E87D7D;color:white;flex:1" onclick="closeModal('discard')">🗑 Odłóż kartę</button>`
+    :`<button class="mbtn can" disabled style="opacity:.4" title="Możesz odkładać karty tylko po rzucie kostką">🗑 Odłóż (po rzucie)</button>`;
+  const result=await showModal(`
+    <div class="m-icon">${info.icon}</div>
+    <div class="m-title">${info.name}</div>
+    <div class="m-text" style="margin-bottom:10px">${info.desc}</div>
+    ${unlocks}
+    <div style="background:#F5F5F5;border-radius:8px;padding:8px 12px;margin-bottom:14px;font-size:.78rem">
+      <strong>Potrzebna do adoptowania:</strong><br>${info.for}
+    </div>
+    <div class="m-btns">
+      <button class="mbtn can" onclick="closeModal('keep')">← Zatrzymaj</button>
+      ${discardBtn}
+    </div>`);
+  if(result==='discard'&&canDiscard){
+    // Sprawdź że indeks nadal ważny (ręka mogła się zmienić)
+    if(cardIdx<p.hand.length&&p.hand[cardIdx]===cardKey){
+      const c=p.hand.splice(cardIdx,1)[0];
+      if(c!=='joker')G.cdisc.push(c);
+      log(G,`${p.n} odkłada ${CNAMES[c]||c}.`,'');
+      toast(`🗑 Odłożono: ${CNAMES[c]||c}`,'info');
+    }else{
+      toast('Karta już zmieniła pozycję — odłóż ręcznie.','info');
+    }
+    renderSidebar();updateButtons();updateHint();
+  }
+};
+
+// ═══ RULES MODAL ════════════════════════════════════════════════
+window.showRules=async function(){
+  await showModal(`
+    <div style="max-height:70vh;overflow-y:auto;padding-right:4px">
+    <div class="m-icon">📖</div>
+    <div class="m-title">Instrukcja — Schronisko</div>
+    <div class="m-sub">Gra planszowa dla 2–5 graczy · 7+ lat · 45–90 min</div>
+
+    <div style="background:var(--warm);border-radius:10px;padding:12px 14px;margin-bottom:14px">
+      <strong style="font-size:.9rem;color:var(--brn2)">🎯 Cel gry</strong><br>
+      <span style="font-size:.82rem;color:var(--brown)">Adoptuj jak najwięcej zwierząt ze Schroniska zbierając odpowiednie Karty Warunków. Wygrywa gracz z największą liczbą Punktów Adopcji gdy schronisko się opróżni.</span>
+    </div>
+
+    <div style="font-size:.85rem;font-weight:800;color:var(--brn2);margin-bottom:6px">🔄 Tura gracza — 2 kroki:</div>
+    <div style="background:#F8F8F8;border-radius:8px;padding:10px 12px;margin-bottom:12px;font-size:.8rem;line-height:1.7">
+      <b>1. Rzuć kostką</b> i przesuń pionek o wyrzuconą liczbę pól (1–6).<br>
+      <b>2. Wykonaj akcję pola</b> na którym stanąłeś:<br>
+      &nbsp;&nbsp;🏡 <b>Dom</b> — dobierz 1 Kartę Warunku<br>
+      &nbsp;&nbsp;🌟 <b>Bonus</b> — dobierz 2 Karty Warunków<br>
+      &nbsp;&nbsp;🎲 <b>Wydarzenie</b> — odwróć kartę i wykonaj polecenie (czytaj głośno!)<br>
+      &nbsp;&nbsp;🐾 <b>Schronisko</b> — możesz adoptować 1 zwierzę<br>
+      &nbsp;&nbsp;💤 <b>Odpoczynek</b> — tracisz następną turę<br>
+      &nbsp;&nbsp;⭐ <b>START/META</b> — za każde przejście przez START dobierasz 1 kartę bonus
+    </div>
+
+    <div style="font-size:.85rem;font-weight:800;color:var(--brn2);margin-bottom:6px">🐾 Adopcja zwierzęcia:</div>
+    <div style="background:#E8F8ED;border-radius:8px;padding:10px 12px;margin-bottom:12px;font-size:.8rem;line-height:1.7">
+      Tylko na polu <b>🐾 Schronisko</b>. Wybierz zwierzę, sprawdź wymagane karty.<br>
+      Masz wszystkie? Odłóż je i weź żeton zwierzęcia + Kartę Adopcji.<br>
+      <b>Max 1 adopcja na turę · Max 2 psy łącznie!</b>
+    </div>
+
+    <div style="font-size:.85rem;font-weight:800;color:var(--brn2);margin-bottom:6px">🃏 Joker i ☀️ Słoneczna Niedziela:</div>
+    <div style="background:#F3E5FF;border-radius:8px;padding:10px 12px;margin-bottom:12px;font-size:.8rem;line-height:1.7">
+      <b>Joker</b> — trzymasz w ręce (liczy się do limitu 5!). Przy adopcji zastępuje 1 dowolny brakujący Warunek.<br>
+      <b>Słoneczna Niedziela (☀️●)</b> — aktywujesz kartą Wydarzeń. Aktywny żeton = pomiń 1 Warunek przy adopcji.
+    </div>
+
+    <div style="font-size:.85rem;font-weight:800;color:var(--brn2);margin-bottom:6px">✋ Limit ręki:</div>
+    <div style="background:#FFF8EE;border-radius:8px;padding:10px 12px;margin-bottom:12px;font-size:.8rem;line-height:1.7">
+      Zawsze max <b>5 Kart Warunków</b> w ręce. Joker liczy się do tego limitu!<br>
+      Gdy przekroczysz limit — natychmiast odrzuć nadmiarowe karty.<br>
+      Kliknij kartę w swojej ręce żeby zobaczyć szczegóły i opcję odłożenia.
+    </div>
+
+    <div style="font-size:.85rem;font-weight:800;color:var(--brn2);margin-bottom:6px">🏆 Koniec gry i punkty:</div>
+    <div style="background:#FFF8E1;border-radius:8px;padding:10px 12px;margin-bottom:12px;font-size:.8rem;line-height:1.7">
+      Gra kończy się gdy ostatnie zwierzę zostanie adoptowane. <b>Runda jest dogramywana!</b><br>
+      <b>Punkty</b> = suma z Kart Adopcji + <b>bonus: +1 pkt za każde 3 różne gatunki</b><br>
+      Remis? Wygrywa gracz z większą liczbą adoptowanych zwierząt.
+    </div>
+
+    <div style="font-size:.85rem;font-weight:800;color:var(--brn2);margin-bottom:6px">🦎 Zwierzęta i wymagania:</div>
+    <div style="border:1px solid #EEE;border-radius:8px;overflow:hidden;margin-bottom:14px;font-size:.75rem">
+      ${[
+        ['🐕','Pies duży','5pkt','Ogród + Karma + Czas'],
+        ['🐩','Pies mały','3pkt','Mieszkanie + Karma + Czas'],
+        ['🐈','Kot','3pkt','Mieszkanie + Kuweta + Zabawki'],
+        ['🐇','Królik','2pkt','Klatka + Ogród + Warzywa'],
+        ['🦜','Papuga','2pkt','Klatka + Czas + Zabawki'],
+        ['🐢','Żółw','2pkt','Klatka + Lampa UV'],
+        ['🦔','Jeż','2pkt','Klatka + Zabawki + Mieszkanie'],
+        ['🐹','Chomik','1pkt','Klatka + Zabawki'],
+        ['🐠','Rybki','1pkt','Akwarium'],
+      ].map((r,i)=>`<div style="display:flex;align-items:center;gap:8px;padding:5px 10px;background:${i%2?'#FAFAFA':'white'}">
+        <span style="font-size:1.1rem">${r[0]}</span>
+        <span style="font-weight:800;flex:0 0 70px">${r[1]}</span>
+        <span style="color:var(--orange);font-weight:700;flex:0 0 36px">${r[2]}</span>
+        <span style="color:var(--blue)">${r[3]}</span>
+      </div>`).join('')}
+    </div>
+
+    <div style="text-align:center;font-size:.75rem;color:var(--gray);margin-bottom:4px">
+      💡 Kliknij zwierzę w schronisku żeby zobaczyć co masz, a czego brakuje!
+    </div>
+    </div>
+
+    <div class="m-btns" style="margin-top:14px">
+      <button class="mbtn ok" onclick="closeModal('ok')">Rozumiem, gramy! 🎲</button>
+    </div>`);
+};
+
+// ═══ TURN END ═══════════════════════════════════════════════════
+async function endTurn(){
+  if(G.over||G.phase!=='acted')return;
+  const p=cp();p.noAdopt=false;p.adoptedNow=null;
+  G.cur=(G.cur+1)%G.players.length;if(G.cur===0)G.round++;
+  G.phase='roll';document.getElementById('dice').textContent='🎲';
+  const next=cp();
+  if(next.skip){next.skip=false;log(G,`${next.emoji} ${next.n} odpoczynek — pominięte.`,'bad');
+    toast(`💤 ${next.n} odpoczywa`,'bad');renderSidebar();updateButtons();updateHint();
+    await sleep(650);await endTurn();return;}
+  log(G,`─── Tura: ${next.emoji} ${next.n} ───`,'hl');
+  renderSidebar();updateButtons();updateHint();
+  if(next.ai){await sleep(550);await aiRoll();}
+}
+
+// ═══ END GAME ═══════════════════════════════════════════════════
+function endGame(){
+  if(G.over)return;G.over=true;
+  G.players.forEach(p=>{const sp=new Set(p.adopted.map(a=>a.id)).size;p.bonus=0|sp/3;p.pts+=p.bonus;});
+  const srt=[...G.players].sort((a,b)=>b.pts-a.pts||b.adopted.length-a.adopted.length);
+  const mc=['🥇','🥈','🥉'],cls=['g','s','b','r'];
+  document.getElementById('end-pod').innerHTML=srt.map((p,i)=>{
+    const sp=new Set(p.adopted.map(a=>a.id)).size;
+    return`<div class="er ${cls[i]||'r'}" id="er-${i}">
+      <div class="e-rank">${mc[i]||`${i+1}.`}</div>
+      <div class="e-dot" style="background:${p.color}"></div>
+      <div class="e-info"><div class="e-name">${p.emoji} ${p.n}${p.ai?' 🤖':''}</div>
+        <div class="e-det">${p.adopted.map(a=>a.e).join('')} ${p.adopted.length} zwierząt · ${sp} gat. · bonus +${p.bonus||0}pkt</div></div>
+      <div class="e-pts">${p.pts}⭐</div>
+    </div>`;
+  }).join('');
+  document.getElementById('end-sub').textContent=`Runda ${G.round} · ${srt[0].n} wygrywa z ${srt[0].pts} pkt!`;
+  // Statystyki quizu
+  const total=quizStats.correct+quizStats.wrong;
+  if(total>0){
+    const pct=Math.round(quizStats.correct/total*100);
+    const statsDiv=document.createElement('div');
+    statsDiv.style.cssText='background:#F0F7FF;border-radius:12px;padding:12px 16px;margin-bottom:16px;font-size:.82rem;text-align:center;border:1.5px solid #C8DEFA';
+    statsDiv.innerHTML=`<div style="font-weight:800;color:#2C5282;margin-bottom:4px">📊 Wyniki Quizu</div>
+      <div style="color:#444">✅ Poprawne: <strong>${quizStats.correct}</strong> &nbsp;·&nbsp; ❌ Błędne: <strong>${quizStats.wrong}</strong> &nbsp;·&nbsp; Skuteczność: <strong>${pct}%</strong></div>
+      <div style="color:#666;font-size:.75rem;margin-top:4px">${pct>=80?'🏆 Świetny wynik!':pct>=50?'👍 Nieźle!':'📚 Warto poćwiczyć!'}</div>`;
+    const pod=document.getElementById('end-pod');
+    pod.parentNode.insertBefore(statsDiv,pod);
+  }
+  showScreen('end');
+  srt.forEach((_,i)=>setTimeout(()=>{const el=document.getElementById(`er-${i}`);if(el)el.classList.add('vis');},200+i*160));
+}
+
+// ═══ MODAL ══════════════════════════════════════════════════════
+let _mR=null;
+function showModal(html){return new Promise(res=>{_mR=res;document.getElementById('modal').innerHTML=html;document.getElementById('overlay').classList.add('open');});}
+function closeModal(r){document.getElementById('overlay').classList.remove('open');if(_mR){_mR(r);_mR=null;}}
+
+// ═══ SETUP UI ═══════════════════════════════════════════════════
+let SP=[{name:'Gracz 1',color:COLORS[0],ai:false},{name:'Gracz 2',color:COLORS[1],ai:false}];
+function preset(n){
+  document.querySelectorAll('.preset-btn').forEach(b=>b.classList.remove('active'));
+  if(n===2)SP=[{name:'Gracz 1',color:COLORS[0],ai:false},{name:'Gracz 2',color:COLORS[1],ai:false}];
+  else if(n===3)SP=[{name:'Gracz 1',color:COLORS[0],ai:false},{name:'Gracz 2',color:COLORS[1],ai:false},{name:'Gracz 3',color:COLORS[2],ai:false}];
+  else if(n===4)SP=[{name:'Gracz 1',color:COLORS[0],ai:false},{name:'Gracz 2',color:COLORS[1],ai:false},{name:'Gracz 3',color:COLORS[2],ai:false},{name:'Gracz 4',color:COLORS[3],ai:false}];
+  else if(n==='ai')SP=[{name:'Ty',color:COLORS[0],ai:false},{name:'AI',color:COLORS[1],ai:true}];
+  document.getElementById(`pre${n}`)?.classList.add('active');
+  renderSetup();
+}
+function renderSetup(){
+  const c=document.getElementById('players-setup');c.innerHTML='';
+  SP.forEach((p,i)=>{
+    const row=document.createElement('div');row.className=`player-row${i===0?' mine':''}`;
+    row.innerHTML=`<div class="player-color" style="background:${p.color}" onclick="cycleColor(${i})"></div>
+      <input class="player-name-input" value="${p.name}" placeholder="Imię" oninput="SP[${i}].name=this.value">
+      <div class="type-btns">
+        <button class="type-btn ${!p.ai?'sel':''}" onclick="setAI(${i},false)">Gracz</button>
+        <button class="type-btn ${p.ai?'sel':''}" onclick="setAI(${i},true)">AI 🤖</button>
+      </div>
+      ${i>=2?`<button class="rm-btn" onclick="rmP(${i})">✕</button>`:''}`;
+    c.appendChild(row);
+  });
+  document.getElementById('add-btn').style.display=SP.length>=5?'none':'block';
+}
+function setAI(i,v){SP[i].ai=v;if(v&&!SP[i].name.includes('AI'))SP[i].name=`AI ${i+1}`;renderSetup();}
+function cycleColor(i){const used=SP.map(p=>p.color);const av=COLORS.filter(c=>!used.includes(c)||c===SP[i].color);const idx=av.indexOf(SP[i].color);SP[i].color=av[(idx+1)%av.length];renderSetup();}
+function rmP(i){if(SP.length>2){SP.splice(i,1);renderSetup();}}
+function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id+'-screen').classList.add('active');}
+
+document.getElementById('add-btn').addEventListener('click',()=>{
+  if(SP.length>=5)return;SP.push({name:`Gracz ${SP.length+1}`,color:COLORS[SP.length],ai:false});
+  document.querySelectorAll('.preset-btn').forEach(b=>b.classList.remove('active'));renderSetup();
+});
+document.getElementById('start-btn').addEventListener('click',()=>{
+  const v=SP.filter(p=>p.name.trim());if(v.length<2){toast('Min. 2 graczy!','bad');return;}
+  showScreen('game');newGame(v);if(cp().ai)setTimeout(()=>aiRoll(),800);
+});
+document.getElementById('online-btn').addEventListener('click',()=>showScreen('lobby'));
+document.getElementById('roll-btn').addEventListener('click',rollDice);
+document.getElementById('adopt-btn').addEventListener('click',openAdopt);
+document.getElementById('end-btn').addEventListener('click',endTurn);
+
+// ═══════════════════════════════════════════════════════════════
+// MULTIPLAYER — Ably WebSocket sync
+// ═══════════════════════════════════════════════════════════════
+let ABLY=null, CHANNEL=null, MY_ROLE=null, MY_IDX=null, ROOM_CODE=null;
+// MY_ROLE: 'host' | 'guest'
+// MY_IDX: indeks gracza który JA kontroluję (0=host, 1=guest)
+
+function ablyKey(){return document.getElementById('ably-key').value.trim();}
+function roomChannel(code){return `schronisko-${code}`;}
+
+function switchLobbyTab(tab){
+  document.querySelectorAll('.ltab').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.lobby-section').forEach(s=>s.classList.remove('active'));
+  document.getElementById(`tab-${tab}`).classList.add('active');
+  document.getElementById(`sec-${tab}`).classList.add('active');
+}
+
+async function connectAbly(){
+  const key=ablyKey();
+  if(!key){toast('Wklej klucz Ably API!','bad');return null;}
+  if(ABLY){try{ABLY.close();}catch(e){}}
+  ABLY=new Ably.Realtime({key, closeOnUnload:true});
+  return new Promise((res,rej)=>{
+    ABLY.connection.on('connected',()=>res(ABLY));
+    ABLY.connection.on('failed',()=>rej(new Error('Błąd połączenia z Ably')));
+    setTimeout(()=>rej(new Error('Timeout połączenia')),10000);
+  });
+}
+
+// ── HOST ──────────────────────────────────────────────────────
+async function hostCreateRoom(){
+  const name=document.getElementById('host-name').value.trim()||'Host';
+  try{
+    toast('Łączę z Ably...','info');
+    await connectAbly();
+    ROOM_CODE=String(Math.floor(1000+Math.random()*9000));
+    MY_ROLE='host'; MY_IDX=0;
+    CHANNEL=ABLY.channels.get(roomChannel(ROOM_CODE));
+    document.getElementById('host-room-code').textContent=ROOM_CODE;
+    document.getElementById('host-room-info').style.display='block';
+    document.getElementById('host-status').textContent='⏳ Czekam na dołączenie kolegi...';
+    document.getElementById('host-status').className='lobby-status waiting';
+    // Subskrybuj — czekaj na guesta
+    CHANNEL.subscribe('guest-joined',(msg)=>{
+      const guestName=msg.data.name||'Gość';
+      document.getElementById('host-status').textContent=`✅ ${guestName} dołączył! Możesz startować.`;
+      document.getElementById('host-status').className='lobby-status connected';
+      document.getElementById('host-start-btn').style.display='block';
+      document.getElementById('host-start-btn').dataset.guestName=guestName;
+      toast(`${guestName} dołączył!`,'good');
+    });
+    CHANNEL.subscribe('game-action',onRemoteAction);
+    toast('Pokój stworzony!','good');
+  }catch(e){toast(`Błąd: ${e.message}`,'bad');console.error(e);}
+}
+
+async function hostStartGame(){
+  const hostName=document.getElementById('host-name').value.trim()||'Host';
+  const guestName=document.getElementById('host-start-btn').dataset.guestName||'Gość';
+  // Ustal seed losowości (host go generuje i wysyła)
+  const seed=Math.floor(Math.random()*1000000);
+  const players=[
+    {name:hostName, color:COLORS[0], ai:false},
+    {name:guestName,color:COLORS[1], ai:false},
+  ];
+  // Wyślij 'game-start' do guesta
+  await CHANNEL.publish('game-start',{players, seed});
+  // Host też startuje
+  showScreen('game');
+  document.getElementById('online-badge').style.display='block';
+  seededNewGame(players, seed);
+}
+
+// ── GUEST ─────────────────────────────────────────────────────
+async function joinRoom(){
+  const name=document.getElementById('join-name').value.trim()||'Gość';
+  const code=document.getElementById('join-code').value.trim();
+  if(code.length!==4){toast('Wpisz 4-cyfrowy kod!','bad');return;}
+  const statusEl=document.getElementById('join-status');
+  statusEl.style.display='block';
+  statusEl.className='lobby-status waiting';
+  statusEl.textContent='⏳ Łączę...';
+  try{
+    await connectAbly();
+    ROOM_CODE=code; MY_ROLE='guest'; MY_IDX=1;
+    CHANNEL=ABLY.channels.get(roomChannel(code));
+    // Subskrybuj przed wysłaniem
+    CHANNEL.subscribe('game-start',(msg)=>{
+      statusEl.textContent='✅ Host startuje grę!';
+      statusEl.className='lobby-status connected';
+      const{players,seed}=msg.data;
+      setTimeout(()=>{
+        showScreen('game');
+        document.getElementById('online-badge').style.display='block';
+        seededNewGame(players,seed);
+      },800);
+    });
+    CHANNEL.subscribe('game-action',onRemoteAction);
+    // Powiadom hosta
+    await CHANNEL.publish('guest-joined',{name});
+    statusEl.textContent='✅ Połączono! Czekam aż host zacznie grę...';
+    statusEl.className='lobby-status connected';
+    toast('Połączono z pokojem!','good');
+  }catch(e){
+    statusEl.textContent=`❌ Błąd: ${e.message}`;
+    statusEl.className='lobby-status error';
+    toast(`Błąd: ${e.message}`,'bad');
+  }
+}
+
+// ── SEED-BASED GAME START ─────────────────────────────────────
+// Żeby obaj gracze mieli identyczny stan gry (te same decks)
+// używamy seedowanego RNG — Mulberry32
+function mulberry32(seed){
+  return function(){
+    seed|=0;seed=seed+0x6D2B79F5|0;
+    let t=Math.imul(seed^seed>>>15,1|seed);
+    t=t+Math.imul(t^t>>>7,61|t)^t;
+    return((t^t>>>14)>>>0)/4294967296;
+  };
+}
+
+function seededNewGame(playerDefs, seed){
+  const rng=mulberry32(seed);
+  function seededShuffle(a){
+    const b=[...a];for(let i=b.length-1;i>0;i--){const j=Math.floor(rng()*(i+1));[b[i],b[j]]=[b[j],b[i]];}return b;
+  }
+  quizStats={correct:0,wrong:0};
+  G={players:playerDefs.map((d,i)=>({
+      id:i,n:d.name,color:d.color,emoji:EMOJIS[i],ai:false,
+      pos:0,hand:[],sn:false,adopted:[],pts:0,skip:false,noAdopt:false,adoptedNow:null
+    })),
+    cur:0,round:1,phase:'roll',
+    cdeck:seededShuffle(buildCondDeck()),cdisc:[],
+    edeck:seededShuffle(buildEventDeck()),edisc:[],
+    qdeck:seededShuffle(buildQuizDeck()),qdisc:[],
+    shelter:ANIMALS.map(a=>({...a})),
+    extraRoll:false,pending:null,over:false,_log:[],
+    _online:true, _seed:seed
+  };
+  drawBoard();renderSidebar();updateButtons();updateHint();
+  log(G,`🌐 Gra online! Host: ${playerDefs[0].name} vs ${playerDefs[1].name}`,'hl');
+  if(MY_IDX!==0) log(G,`Jesteś graczem #${MY_IDX+1} — ${playerDefs[MY_IDX].name}`,'hl');
+}
+
+// ── WYSYŁANIE AKCJI ───────────────────────────────────────────
+// Każda akcja gracza (rzut, zakończenie tury, adopcja)
+// jest wysyłana do kanału. Drugi gracz ją odbiera i wykonuje.
+async function publishAction(type, data={}){
+  if(!CHANNEL||!G?._online)return;
+  try{
+    await CHANNEL.publish('game-action',{type,data,from:MY_IDX});
+  }catch(e){console.error('Ably publish error:',e);}
+}
+
+// ── ODBIÓR AKCJI ─────────────────────────────────────────────
+function onRemoteAction(msg){
+  const{type,data,from}=msg.data;
+  if(from===MY_IDX)return; // własna akcja — ignoruj (lokalnie już wykonana)
+  if(!G)return;
+  // Zastosuj akcję do lokalnego stanu
+  handleRemoteAction(type,data);
+}
+
+function handleRemoteAction(type,data){
+  switch(type){
+    case 'roll':
+      // Drugi gracz rzucił — animuj i przesuń jego pionka
+      if(G.phase==='roll'&&G.cur!==MY_IDX){
+        const p=cp();
+        const dEl=document.getElementById('dice');
+        const faces=['⚀','⚁','⚂','⚃','⚄','⚅'];
+        dEl.textContent=faces[data.val-1];
+        log(G,`${p.emoji} ${p.n} rzuca: ${data.val}`,'');
+        toast(`🌐 ${p.n} rzuca: ${data.val}`);
+        movePlayer(p,data.val);
+      }
+      break;
+    case 'end-turn':
+      if(G.phase==='acted'&&G.cur!==MY_IDX)endTurn();
+      break;
+    case 'adopt':
+      // Drugi gracz adoptuje
+      if(G.cur!==MY_IDX){
+        const animal=G.shelter.find(a=>a.id===data.animalId);
+        const p=G.players[G.cur];
+        if(animal&&p){
+          // Usuń karty
+          const ch=checkAdopt(p,animal);
+          let jL=ch.jUsed,snL=ch.snUsed?1:0;
+          for(const r of animal.reqs){
+            const i=p.hand.indexOf(r);
+            if(i>=0)p.hand.splice(i,1);
+            else if(jL>0){const ji=p.hand.indexOf('joker');if(ji>=0){p.hand.splice(ji,1);jL--;}}
+            else if(snL>0){snL--;p.sn=false;}
+          }
+          animal.qty--;
+          const gained={...animal};p.adopted.push(gained);p.adoptedNow=gained;p.pts+=animal.pts;
+          log(G,`🌐 ${p.n} adoptuje ${animal.e} ${animal.name} — +${animal.pts} pkt!`,'hl');
+          toast(`🌐 ${animal.e} ${p.n} adoptuje!`,'good');
+          sndAdopt();
+          drawBoard();renderSidebar();
+          if(!left())endGame();
+        }
+      }
+      break;
+    case 'quiz-answer':
+      // Drugi gracz odpowiedział na quiz
+      if(G.cur!==MY_IDX){
+        const p=G.players[G.cur];
+        if(data.correct){draw(G,p,1);log(G,`🌐 ${p.n} odpowiada poprawnie! +1 karta`,'good');}
+        else log(G,`🌐 ${p.n} odpowiada błędnie.`,'bad');
+        renderSidebar();
+        // Zakończ pole quizu po stronie obserwatora
+        setTimeout(()=>{
+          G.phase='acted';updateButtons();updateHint();
+        },500);
+      }
+      break;
+    case 'state-sync':
+      // Pełna synchronizacja stanu (fallback)
+      if(data.G){
+        const prevLog=G._log;
+        Object.assign(G,data.G);
+        G._log=prevLog;
+        drawBoard();renderSidebar();updateButtons();updateHint();
+      }
+      break;
+  }
+}
+
+// ── PATCH lokalnych funkcji dla trybu online ─────────────────
+// Zapamiętujemy oryginalne funkcje
+const _origRollDice=rollDice;
+const _origEndTurn=endTurn;
+
+// Patch rollDice — blokuj gdy nie twoja tura, wyślij akcję
+async function rollDice(){
+  if(G&&G._online){
+    if(G.cur!==MY_IDX){toast('Nie twoja tura!','bad');return;}
+  }
+  if(G.over||G.phase!=='roll')return;
+  const p=cp();if(p.ai)return;
+  const faces=['⚀','⚁','⚂','⚃','⚄','⚅'];const dEl=document.getElementById('dice');
+  sndDice();
+  dEl.classList.add('roll');const iv=setInterval(()=>dEl.textContent=faces[Math.floor(Math.random()*6)],70);
+  await sleep(480);clearInterval(iv);dEl.classList.remove('roll');
+  const val=randDice();dEl.textContent=faces[val-1];
+  log(G,`${p.emoji} ${p.n} rzuca: ${val}`,'');toast(`🎲 Wyrzucono: ${val}`);
+  if(G._online)await publishAction('roll',{val});
+  await movePlayer(p,val);
+}
+
+// Patch endTurn — wyślij akcję przed wykonaniem
+const _baseEndTurn=async function(){
+  if(G.over||G.phase!=='acted')return;
+  const p=cp();p.noAdopt=false;p.adoptedNow=null;
+  G.cur=(G.cur+1)%G.players.length;if(G.cur===0)G.round++;
+  G.phase='roll';document.getElementById('dice').textContent='🎲';
+  const next=cp();
+  if(next.skip){next.skip=false;log(G,`${next.emoji} ${next.n} odpoczynek — pominięte.`,'bad');
+    toast(`💤 ${next.n} odpoczywa`,'bad');renderSidebar();updateButtons();updateHint();
+    await sleep(650);await _baseEndTurn();return;}
+  log(G,`─── Tura: ${next.emoji} ${next.n} ───`,'hl');
+  renderSidebar();updateButtons();updateHint();
+  if(next.ai){await sleep(550);await aiRoll();}
+};
+
+async function endTurn(){
+  if(G&&G._online&&G.cur===MY_IDX){
+    await publishAction('end-turn',{});
+  }
+  await _baseEndTurn();
+}
+
+// Patch adoptConfirm — wyślij akcję po adopcji
+const _origAdoptConfirm=window.adoptConfirm;
+window.adoptConfirm=async function(){
+  const selId=window._aSel;
+  await _origAdoptConfirm();
+  if(G&&G._online&&selId){
+    await publishAction('adopt',{animalId:selId});
+  }
+};
+
+// Patch pickQuizOpt — wyślij wynik quizu
+const _origPickQuizOpt=window.pickQuizOpt;
+window.pickQuizOpt=function(chosen,correct){
+  _origPickQuizOpt(chosen,correct);
+  if(G&&G._online){
+    publishAction('quiz-answer',{correct:chosen===correct});
+  }
+};
+
+// Blokuj przyciski akcji gdy nie twoja tura (tryb online)
+const _origUpdateButtons=updateButtons;
+function updateButtons(){
+  _origUpdateButtons();
+  if(!G||!G._online)return;
+  const isMyTurn=G.cur===MY_IDX;
+  document.getElementById('roll-btn').disabled=!isMyTurn||G.phase!=='roll';
+  document.getElementById('end-btn').disabled=!isMyTurn||G.phase!=='acted';
+  document.getElementById('adopt-btn').disabled=
+    !isMyTurn||G.phase!=='acted'||ftype(cp().pos)!=='schron'||cp().noAdopt||!left();
+  if(!isMyTurn){
+    document.getElementById('roll-btn').textContent=`⏳ Tura: ${cp().n}`;
+  }
+}
+
+renderSetup();
+</script>
+</body>
+</html>
