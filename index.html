@@ -1063,40 +1063,62 @@ async function runField(p){
 
 // ═══ QUIZ MODAL ═════════════════════════════════════════════════
 async function doQuiz(p){
-  // Dobierz pytanie z talii
+  // W trybie online: HOST losuje pytanie i wysyła przez Ably
+  // W trybie lokalnym: losuj normalnie
+  if(G._online){
+    if(MY_IDX===G.cur){
+      // Ja jestem aktywnym graczem — wylosuj pytanie i wyślij do kolegi
+      if(G.qdeck.length===0){G.qdeck=shuffle(G.qdisc);G.qdisc=[];}
+      if(G.qdeck.length===0){toast('Brak pytań!','info');return;}
+      const q=G.qdeck.pop();G.qdisc.push(q);
+      // Wyślij pytanie do drugiego gracza przed pokazaniem modalu
+      await publishAction('quiz-show',{q});
+      await showQuizModal(q, true); // true = mogę odpowiadać
+    }
+    // Jeśli jestem obserwatorem — czekam na 'quiz-show' z handleRemoteAction
+    // (modal zostanie pokazany przez handleRemoteAction)
+    return;
+  }
+  // Tryb lokalny
   if(G.qdeck.length===0){
     G.qdeck=shuffle(G.qdisc);G.qdisc=[];
     toast('🔄 Tasujemy pytania od nowa','info');
   }
   if(G.qdeck.length===0){toast('Brak pytań!','info');return;}
-
   const q=G.qdeck.pop();G.qdisc.push(q);
+  await showQuizModal(q, true);
+}
+
+// Wyświetl modal quizu — canAnswer=true tylko dla aktywnego gracza
+async function showQuizModal(q, canAnswer){
   const lvLabel=q.lv==='k'
     ?'<span style="background:#E8F8ED;color:#3D8B57;border-radius:12px;padding:2px 9px;font-size:.68rem;font-weight:800">🧒 Dla dzieci</span>'
     :'<span style="background:#EDE8FA;color:#5B3A9B;border-radius:12px;padding:2px 9px;font-size:.68rem;font-weight:800">🎓 Dla dorosłych</span>';
 
-  // Opcje odpowiedzi z losowym shufflem (zachowujemy indeks poprawnej)
-  const shuffled=q.a.map((txt,i)=>({txt,correct:i===q.c}));
-  // NIE tasujemy — zachowujemy oryginalne ABCD żeby łatwiej grać
-
   const optLetters=['A','B','C','D'];
   const optsHtml=q.a.map((txt,i)=>`
-    <button class="quiz-opt" id="qo-${i}" onclick="pickQuizOpt(${i},${q.c})">
+    <button class="quiz-opt" id="qo-${i}" onclick="${canAnswer?`pickQuizOpt(${i},${q.c})`:'void(0)'}"
+      ${canAnswer?'':' style="cursor:default;opacity:.7"'}>
       <span class="quiz-letter">${optLetters[i]}</span>
       <span class="quiz-txt">${txt}</span>
     </button>`).join('');
 
+  const watcherNote=canAnswer?''
+    :'<div style="background:#FFF8EE;border-radius:8px;padding:7px 12px;margin-bottom:10px;font-size:.78rem;color:var(--orange);text-align:center">👁 Obserwujesz — kolega odpowiada...</div>';
+
   const statsLine=quizStats.correct+quizStats.wrong>0
-    ?`<div style="font-size:.7rem;color:var(--gray);text-align:center;margin-bottom:8px">Twój wynik w tej grze: ✅ ${quizStats.correct} / ❌ ${quizStats.wrong}</div>`
+    ?`<div style="font-size:.7rem;color:var(--gray);text-align:center;margin-bottom:8px">Wynik: ✅ ${quizStats.correct} / ❌ ${quizStats.wrong}</div>`
     :'';
 
   window._quizAnswered=false;
+  window._quizCanAnswer=canAnswer;
   await showModal(`
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
       <div class="m-icon" style="font-size:2rem;margin:0">❓</div>
       ${lvLabel}
     </div>
     <div class="m-title" style="font-size:1.1rem;margin-bottom:14px;text-align:left;line-height:1.4">${q.q}</div>
+    ${watcherNote}
     ${statsLine}
     <div id="quiz-opts" style="display:flex;flex-direction:column;gap:7px;margin-bottom:14px">
       ${optsHtml}
@@ -1108,33 +1130,24 @@ async function doQuiz(p){
 }
 
 window._quizAnswered=false;
+window._quizCanAnswer=true;
 window.pickQuizOpt=function(chosen, correct){
   if(window._quizAnswered)return;
+  if(!window._quizCanAnswer)return; // obserwator nie może klikać
   window._quizAnswered=true;
   const p=cp();
   const isCorrect=chosen===correct;
 
-  // Podświetl odpowiedzi
-  document.querySelectorAll('.quiz-opt').forEach((btn,i)=>{
-    btn.disabled=true;
-    if(i===correct){
-      btn.style.background='#E8F8ED';btn.style.borderColor='#5BAD72';
-      btn.querySelector('.quiz-letter').style.background='#5BAD72';
-    } else if(i===chosen&&!isCorrect){
-      btn.style.background='#FEF0F0';btn.style.borderColor='#E87D7D';
-      btn.querySelector('.quiz-letter').style.background='#E87D7D';
-    }
-  });
+  _showQuizResult(chosen, correct, isCorrect);
 
-  const resEl=document.getElementById('quiz-result');
   if(isCorrect){
     quizStats.correct++;
-    // Dobierz kartę
     const before=p.hand.length;
     draw(G,p,1);
     const newCard=p.hand.length>before?p.hand[p.hand.length-1]:null;
     const cardName=newCard?(newCard==='joker'?'🃏 Joker':CNAMES[newCard]):'brak (limit ręki)';
-    resEl.innerHTML=`<div style="background:#E8F8ED;border-radius:9px;padding:10px 14px;text-align:center">
+    const resEl=document.getElementById('quiz-result');
+    if(resEl)resEl.innerHTML=`<div style="background:#E8F8ED;border-radius:9px;padding:10px 14px;text-align:center">
       <div style="font-size:1.5rem">🎉</div>
       <div style="font-weight:800;color:#3D8B57;font-size:.95rem">Poprawnie!</div>
       <div style="font-size:.8rem;color:#5C3D20;margin-top:4px">Dostajesz kartę: <strong>${cardName}</strong></div>
@@ -1144,8 +1157,9 @@ window.pickQuizOpt=function(chosen, correct){
     renderSidebar();
   } else {
     quizStats.wrong++;
-    const correctAns=document.querySelectorAll('.quiz-opt')[correct]?.querySelector('.quiz-txt')?.textContent||'';
-    resEl.innerHTML=`<div style="background:#FEF0F0;border-radius:9px;padding:10px 14px;text-align:center">
+    const correctAns=q_a_cache[correct]||'';
+    const resEl=document.getElementById('quiz-result');
+    if(resEl)resEl.innerHTML=`<div style="background:#FEF0F0;border-radius:9px;padding:10px 14px;text-align:center">
       <div style="font-size:1.5rem">😞</div>
       <div style="font-weight:800;color:#C0392B;font-size:.95rem">Niestety, błąd!</div>
       <div style="font-size:.8rem;color:#5C3D20;margin-top:4px">Prawidłowa odpowiedź: <strong>${correctAns}</strong></div>
@@ -1155,10 +1169,31 @@ window.pickQuizOpt=function(chosen, correct){
     toast('❌ Błąd — brak karty','bad');
   }
 
-  // Pokaż przycisk zamknięcia
   const closeBtn=document.getElementById('quiz-close');
   if(closeBtn)closeBtn.style.display='block';
+
+  // W trybie online wyślij wynik do kolegi
+  if(G._online){
+    publishAction('quiz-answer',{correct:isCorrect,chosen,correctIdx:correct});
+  }
 };
+
+// Cache tekstu odpowiedzi do wyświetlenia po otrzymaniu wyniku przez obserwatora
+let q_a_cache=[];
+
+// Podświetl odpowiedzi (shared function)
+function _showQuizResult(chosen, correct, isCorrect){
+  document.querySelectorAll('.quiz-opt').forEach((btn,i)=>{
+    btn.disabled=true;
+    if(i===correct){
+      btn.style.background='#E8F8ED';btn.style.borderColor='#5BAD72';
+      const l=btn.querySelector('.quiz-letter');if(l)l.style.background='#5BAD72';
+    } else if(i===chosen&&!isCorrect){
+      btn.style.background='#FEF0F0';btn.style.borderColor='#E87D7D';
+      const l=btn.querySelector('.quiz-letter');if(l)l.style.background='#E87D7D';
+    }
+  });
+}
 
 // Modal "dostałeś kartę!" — pokazuje nowe karty z opisem
 async function showNewCardModal(p, newCards, fieldName){
@@ -1757,7 +1792,14 @@ function endGame(){
 // ═══ MODAL ══════════════════════════════════════════════════════
 let _mR=null;
 function showModal(html){return new Promise(res=>{_mR=res;document.getElementById('modal').innerHTML=html;document.getElementById('overlay').classList.add('open');});}
-function closeModal(r){document.getElementById('overlay').classList.remove('open');if(_mR){_mR(r);_mR=null;}}
+function closeModal(r){
+  document.getElementById('overlay').classList.remove('open');
+  if(_mR){_mR(r);_mR=null;}
+  if(window._pendingQuizPhase&&r==='done'){
+    window._pendingQuizPhase=false;
+    if(G){G.phase='acted';updateButtons();updateHint();}
+  }
+}
 
 // ═══ SETUP UI ═══════════════════════════════════════════════════
 let SP=[{name:'Gracz 1',color:COLORS[0],ai:false},{name:'Gracz 2',color:COLORS[1],ai:false}];
@@ -2009,17 +2051,52 @@ function handleRemoteAction(type,data){
         }
       }
       break;
+    case 'quiz-show':
+      // Kolega wylosował pytanie — pokaż nam ten sam modal (tylko do oglądania)
+      if(G.cur!==MY_IDX){
+        const q=data.q;
+        // Zapisz odpowiedzi do cache żeby móc wyświetlić wynik
+        q_a_cache=q.a;
+        // Pokaż modal z pytaniem w trybie obserwatora (canAnswer=false)
+        showQuizModal(q, false);
+      }
+      break;
     case 'quiz-answer':
-      // Drugi gracz odpowiedział na quiz
+      // Kolega odpowiedział — pokaż wynik w naszym modalу i zakończ fazę
       if(G.cur!==MY_IDX){
         const p=G.players[G.cur];
-        if(data.correct){draw(G,p,1);log(G,`🌐 ${p.n} odpowiada poprawnie! +1 karta`,'good');}
-        else log(G,`🌐 ${p.n} odpowiada błędnie.`,'bad');
+        const{correct,chosen,correctIdx}=data;
+        // Podświetl odpowiedzi w modalu obserwatora
+        _showQuizResult(chosen, correctIdx, correct);
+        // Aktualizuj stan gry
+        if(correct){
+          draw(G,p,1);
+          const resEl=document.getElementById('quiz-result');
+          if(resEl)resEl.innerHTML=`<div style="background:#E8F8ED;border-radius:9px;padding:10px 14px;text-align:center">
+            <div style="font-size:1.5rem">🎉</div>
+            <div style="font-weight:800;color:#3D8B57;font-size:.95rem">Poprawnie!</div>
+            <div style="font-size:.8rem;color:#5C3D20;margin-top:4px">Gracz dostaje kartę!</div>
+          </div>`;
+          log(G,`🌐 ${p.n} odpowiada poprawnie! +1 karta`,'good');
+        } else {
+          const correctAns=q_a_cache[correctIdx]||'';
+          const resEl=document.getElementById('quiz-result');
+          if(resEl)resEl.innerHTML=`<div style="background:#FEF0F0;border-radius:9px;padding:10px 14px;text-align:center">
+            <div style="font-size:1.5rem">😞</div>
+            <div style="font-weight:800;color:#C0392B;font-size:.95rem">Błąd!</div>
+            <div style="font-size:.8rem;color:#5C3D20;margin-top:4px">Poprawna: <strong>${correctAns}</strong></div>
+          </div>`;
+          log(G,`🌐 ${p.n} odpowiada błędnie.`,'bad');
+        }
         renderSidebar();
-        // Zakończ pole quizu po stronie obserwatora
-        setTimeout(()=>{
-          G.phase='acted';updateButtons();updateHint();
-        },500);
+        // Pokaż przycisk zamknięcia modalu u obserwatora
+        const closeBtn=document.getElementById('quiz-close');
+        if(closeBtn){closeBtn.style.display='block';closeBtn.textContent='Zamknij ➡️';}
+        // Ustaw fazę po zamknięciu modalu przez obserwatora
+        // Modal zostanie zamknięty przez closeModal('done') z przycisku
+        // Po zamknięciu trzeba ustawić phase='acted'
+        const origClose=closeModal;
+        window._pendingQuizPhase=true;
       }
       break;
     case 'state-sync':
@@ -2088,14 +2165,7 @@ window.adoptConfirm=async function(){
   }
 };
 
-// Patch pickQuizOpt — wyślij wynik quizu
-const _origPickQuizOpt=window.pickQuizOpt;
-window.pickQuizOpt=function(chosen,correct){
-  _origPickQuizOpt(chosen,correct);
-  if(G&&G._online){
-    publishAction('quiz-answer',{correct:chosen===correct});
-  }
-};
+// (quiz-answer publish is now inside pickQuizOpt directly)
 
 // Blokuj przyciski akcji gdy nie twoja tura (tryb online)
 const _origUpdateButtons=updateButtons;
