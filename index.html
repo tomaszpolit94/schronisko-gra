@@ -384,7 +384,7 @@ body{font-family:'Nunito',sans-serif;background:var(--cream);min-height:100vh;ov
 <div class="overlay" id="overlay"><div class="modal" id="modal"></div></div>
 <div class="toasts" id="toasts"></div>
 <script>
-// ═══ DATA ═══════════════════════════════════════════════════════
+// ═══ DATA ═════════════════════════════════════════════════════════════════
 const COLORS=['#E87D7D','#4A90C4','#5BAD72','#F0C040','#9B7BC8'];
 const EMOJIS=['🐱','🐶','🐰','🐹','🦜'];
 const CNAMES={ogrod:'🌳 Ogród',karma:'🥩 Karma',czas:'⏰ Czas',
@@ -476,7 +476,7 @@ while(FTYPES.length<48)FTYPES.push('dom');FTYPES.length=48;
 // ═══ QUIZ — 100 pytań (mix: dzieci + dorośli) ══════════════════
 // Poziom: 'k'=dzieci, 'a'=dorośli
 const QUIZ_QUESTIONS=[
-  // ── DZIECI ────────────────────────────────────────────────────
+  // ── DZIECI ───────────────────────────────────────────────────────
   {q:'Ile nóg ma pies?',a:['4','2','6','8'],c:0,lv:'k'},
   {q:'Jak nazywa się domek królika?',a:['Legowisko','Klatka','Nora','Budka'],c:2,lv:'k'},
   {q:'Co jedzą rybki w akwarium?',a:['Trawę','Specjalną karmę dla ryb','Chleb','Ser'],c:1,lv:'k'},
@@ -517,7 +517,7 @@ const QUIZ_QUESTIONS=[
   {q:'Które z tych zwierząt jest najdroższe (ma najwięcej pkt)?',a:['Kot','Rybki','Pies duży','Chomik'],c:2,lv:'k'},
   {q:'Co znaczy żeton ☀️● Słoneczna Niedziela?',a:['Tracisz turę','Możesz pominąć 1 Warunek','Dostajasz 2 karty','Cofasz się'],c:1,lv:'k'},
   {q:'Na którym polu możesz adoptować zwierzę?',a:['Dom','Bonus','Schronisko','Wydarzenie'],c:2,lv:'k'},
-  // ── DOROŚLI ───────────────────────────────────────────────────
+  // ── DOROŚLI ────────────────────────────────────────────────────────────
   {q:'Ile razy czulszy jest węch psa od ludzkiego?',a:['5×','40×','100×','2×'],c:1,lv:'a'},
   {q:'Ile igiełek ma jeż?',a:['100–500','1000–2000','5000–7000','10 000+'],c:2,lv:'a'},
   {q:'Ile słów może rozumieć inteligentna papuga?',a:['10–20','50–100','100+','Żadnych'],c:2,lv:'a'},
@@ -580,7 +580,7 @@ function buildQuizDeck(){
 // Liczniki odpowiedzi poprawnych/błędnych
 let quizStats={correct:0,wrong:0};
 
-// ═══ STATE ══════════════════════════════════════════════════════
+// ═══ STATE ═════════════════════════════════════════════════════════════════
 let G=null;
 function newGame(defs){
   quizStats={correct:0,wrong:0};
@@ -618,7 +618,7 @@ function toast(txt,type=''){
   document.getElementById('toasts').appendChild(el);setTimeout(()=>el.remove(),3200);
 }
 
-// ═══ ADOPT CHECK ════════════════════════════════════════════════
+// ═══ ADOPT CHECK ═════════════════════════════════════════════════════
 function checkAdopt(p,animal){
   const need=[...animal.reqs];const h=[...p.hand];const miss=[];
   for(const r of need){const i=h.indexOf(r);if(i>=0)h.splice(i,1);else miss.push(r);}
@@ -691,7 +691,7 @@ function sndAdopt(){
   });
 }
 
-// ═══ BOARD SVG ═════════════════════════════════════════════════
+// ═══ BOARD SVG ═════════════════════════════════════════════════════════
 // SVG 1200×680 — prostokąt, pola obwodu większe kosztem mniejszego środka
 const SVW=1200, SVH=680;
 const NH=14, NV=10;  // mniej rzędów → wyższe pola pionowe
@@ -738,7 +738,7 @@ function drawBoard(){
   svg.appendChild(se('rect',{x:0,y:0,width:SVW,height:SVH,fill:'#FFF8EE',rx:10}));
   svg.appendChild(se('rect',{x:3,y:3,width:SVW-6,height:SVH-6,fill:'none',stroke:'#F0D090','stroke-width':'2',rx:8}));
 
-  // ── 48 pól trasy ─────────────────────────────────────────────
+  // ── 48 pól trasy ─────────────────────────────────────────────────
   for(let n=0;n<48;n++){
     const{x,y}=fxy(n), ft=FTYPES[n];
     const g=se('g',{'data-n':n});
@@ -792,7 +792,7 @@ function drawBoard(){
     svg.appendChild(g);
   }
 
-  // ── Schronisko (środek) ───────────────────────────────────────
+  // ── Schronisko (środek) ───────────────────────────────────────────
   const sx=OX+(CW+GX), sy=OY+(CH+GY);
   const sw=(NH-2)*(CW+GX)-GX, sh=(NV-2)*(CH+GY)-GY;
 
@@ -836,7 +836,6 @@ function drawShelter(svg, defs, gx, gy, gw, gh){
     g2.appendChild(se('title',{},`${a.name} — kliknij żeby zobaczyć wymagania`));
 
     if(a.qty===0){
-      // Wyszarzone — adoptowane
       g2.appendChild(se('rect',{x:tx,y:ty,width:tw,height:th,
         fill:'#F3F3F3',stroke:'#E0E0E0','stroke-width':'1',rx:'8'}));
       const emSz=Math.min(tw*.55, th*.4, 32);
@@ -848,7 +847,6 @@ function drawShelter(svg, defs, gx, gy, gw, gh){
       return;
     }
 
-    // Efekt stosu — kilka warstw kart z przesunięciem (maks qty=3)
     const stackN=Math.min(a.qty, 3);
     for(let s=stackN-1;s>=0;s--){
       const off=s*2.5;
@@ -862,23 +860,19 @@ function drawShelter(svg, defs, gx, gy, gw, gh){
         opacity: s===0?'1':s===1?'0.85':'0.65'}));
     }
 
-    // Duże emoji — centralne
     const emSz=Math.min(tw*.62, th*.46, 38);
     g2.appendChild(se('text',{x:tx+tw/2,y:ty+th*.44,'text-anchor':'middle',
       'dominant-baseline':'middle','font-size':emSz},a.e));
 
-    // Nazwa pod emoji
     const nmSz=Math.max(Math.min(tw*.145, th*.12, 10.5), 7.5);
     g2.appendChild(se('text',{x:tx+tw/2,y:ty+th*.72,'text-anchor':'middle',
       'font-family':'Nunito,sans-serif','font-weight':'800','font-size':nmSz,fill:'#6B4020'},a.name));
 
-    // Punkty — lewy dolny
     const ptSz=Math.max(nmSz*.88, 7);
     g2.appendChild(se('text',{x:tx+5,y:ty+th-.5,'text-anchor':'start',
       'dominant-baseline':'text-after-edge',
       'font-family':'Nunito,sans-serif','font-weight':'800','font-size':ptSz,fill:'#9B7BC8'},`${a.pts}⭐`));
 
-    // Licznik ×N — prawy dolny, wyraźny
     const badge=se('g',{});
     const bw=ptSz*1.9, bh=ptSz*1.35, bx=tx+tw-bw-2, by_=ty+th-bh-2;
     badge.appendChild(se('rect',{x:bx,y:by_,width:bw,height:bh,fill:'#E8833A',rx:'4'}));
@@ -891,18 +885,16 @@ function drawShelter(svg, defs, gx, gy, gw, gh){
   });
 }
 function drawPawns(svg){
-  // Offsety pionków w polu (żeby nie nakładały się gdy kilku na tym samym polu)
   const offs=[[.22,.22],[.62,.22],[.22,.60],[.62,.60],[.42,.40]];
   G.players.forEach((p,i)=>{
     const{x,y}=fxy(p.pos);const[ox,oy2]=offs[i]||[.42,.40];
     const px=x+ox*CW, py=y+oy2*CH;
-    const r=Math.min(CW,CH)*0.22; // promień pionka proporcjonalny do pola
+    const r=Math.min(CW,CH)*0.22;
     const g=se('g',{class:`pw${G.cur===i?' cpw':''}`,id:`pw-${i}`});
     g.appendChild(se('ellipse',{cx:px,cy:py+r*0.9,rx:r*0.75,ry:r*0.28,fill:'rgba(0,0,0,0.18)'}));
     g.appendChild(se('circle',{cx:px,cy:py,r,fill:p.color,stroke:'white',
       'stroke-width':G.cur===i?'2.5':'1.5'}));
     if(G.cur===i){
-      // Poświata dla aktywnego pionka
       g.appendChild(se('circle',{cx:px,cy:py,r:r+3,fill:'none',stroke:p.color,
         'stroke-width':'2',opacity:'0.4'}));
     }
@@ -929,7 +921,7 @@ function movePawn(idx){
   pw.setAttribute('class',`pw${G.cur===idx?' cpw':''}`);
 }
 
-// ═══ SIDEBAR & HINTS ════════════════════════════════════════════
+// ═══ SIDEBAR & HINTS ══════════════════════════════════════════════
 function renderSidebar(){
   if(!G)return;
   document.getElementById('sb-round').textContent=`Runda ${G.round}`;
@@ -944,7 +936,6 @@ function renderSidebar(){
     const isCur=i===G.cur&&G.phase==='acted';
     const hd=p2.hand.map((c,ci)=>{
       const name=c==='joker'?'🃏 Joker':CNAMES[c];
-      // Tylko aktualny gracz może kliknąć swoje karty
       if(isCur){
         return`<span class="chip${c==='joker'?' j':''} chip-btn" onclick="showCardInfo('${c}',${ci})" title="Kliknij żeby zobaczyć szczegóły">${name}</span>`;
       }
@@ -986,7 +977,7 @@ function updateHint(){
   hb.innerHTML=hints.map(h=>`<div class="hi"><span class="hi-icon">${h.i}</span><span>${h.t}</span></div>`).join('');
 }
 function toggleHint(){document.getElementById('hint-box').classList.toggle('col');}
-function updateButtons(){
+function _baseUpdateButtons(){
   if(!G)return;const p=cp();
   const rb=document.getElementById('roll-btn'),ab=document.getElementById('adopt-btn'),eb=document.getElementById('end-btn');
   rb.disabled=G.phase!=='roll';eb.disabled=G.phase!=='acted';
@@ -995,7 +986,7 @@ function updateButtons(){
   rb.textContent=p.ai?'🤖 AI gra...':'🎲 Rzuć kostką';
 }
 
-// ═══ DICE ═══════════════════════════════════════════════════════
+// ═══ DICE ════════════════════════════════════════════════════════════════
 function randDice(){return Math.floor(Math.random()*6)+1;}
 async function rollDice(){
   if(G.over||G.phase!=='roll')return;const p=cp();if(p.ai)return;
@@ -1027,23 +1018,36 @@ async function movePlayer(p,steps){
 }
 async function runField(p){
   const ft=ftype(p.pos);log(G,`${p.emoji} ${p.n} → ${ft}`,'');
+  // W trybie online tylko AKTYWNY gracz losuje karty i je rozsyła.
+  // Obserwator otrzyma dokładnie te same karty przez 'field-cards'.
+  const onlineObserver = G._online && G.cur!==MY_IDX;
   if(ft==='dom'){
-    const before=p.hand.length;
-    draw(G,p,1);
-    log(G,`${p.n} dobiera 1 kartę.`,'good');
-    if(!p.ai && p.hand.length>before){
-      const newCard=p.hand[p.hand.length-1];
-      await showNewCardModal(p, [newCard], 'Dom');
-    } else toast('🏡 +1 karta!','good');
+    if(onlineObserver){
+      // czekaj na field-cards od aktywnego gracza (modal pokaże handler)
+    } else {
+      const before=p.hand.length;
+      draw(G,p,1);
+      const newCard=p.hand.length>before?p.hand[p.hand.length-1]:null;
+      log(G,`${p.n} dobiera 1 kartę.`,'good');
+      if(G._online)await publishAction('field-cards',{cards:newCard?[newCard]:[],field:'Dom'});
+      if(!p.ai && newCard){
+        await showNewCardModal(p, [newCard], 'Dom');
+      } else toast('🏡 +1 karta!','good');
+    }
   }
   else if(ft==='bonus'){
-    const before=p.hand.length;
-    draw(G,p,2);
-    log(G,`${p.n} — BONUS! +2 karty!`,'good');
-    if(!p.ai){
+    if(onlineObserver){
+      // czekaj na field-cards
+    } else {
+      const before=p.hand.length;
+      draw(G,p,2);
+      log(G,`${p.n} — BONUS! +2 karty!`,'good');
       const newCards=p.hand.slice(Math.max(0,before));
-      if(newCards.length>0) await showNewCardModal(p, newCards, 'Bonus');
-      else toast('🌟 BONUS +2!','good');
+      if(G._online)await publishAction('field-cards',{cards:newCards,field:'Bonus'});
+      if(!p.ai){
+        if(newCards.length>0) await showNewCardModal(p, newCards, 'Bonus');
+        else toast('🌟 BONUS +2!','good');
+      }
     }
   }
   else if(ft==='quiz'){
@@ -1061,7 +1065,7 @@ async function runField(p){
   if(p.ai)await aiDecide(p);
 }
 
-// ═══ QUIZ MODAL ═════════════════════════════════════════════════
+// ═══ QUIZ MODAL ════════════════════════════════════════════════════════
 async function doQuiz(p){
   // W trybie online: HOST losuje pytanie i wysyła przez Ably
   // W trybie lokalnym: losuj normalnie
@@ -1225,7 +1229,7 @@ async function showNewCardModal(p, newCards, fieldName){
     <div class="m-btns"><button class="mbtn ok" onclick="closeModal('ok')">Super, gram dalej! 👍</button></div>`);
 }
 
-// ═══ EVENTS ═════════════════════════════════════════════════════
+// ═══ EVENTS ═══════════════════════════════════════════════════════════════
 async function doEvent(p){
   if(!G.edeck.length){updateButtons();updateHint();if(p.ai)await aiDecide(p);return;}
   const ev=G.edeck.pop();G.edisc.push(ev);log(G,`${p.n} losuje: ${ev.name}`,'');
@@ -1251,7 +1255,7 @@ async function doEvent(p){
   updateButtons();updateHint();if(p.ai)await aiDecide(p);
 }
 
-// ── Lose card ─────────────────────────────────────────────────
+// ── Lose card ──────────────────────────────────────────────────────
 async function doLoseCard(p){
   if(!p.hand.length)return;
   window._lcSel=null;
@@ -1269,7 +1273,7 @@ window.lcConfirm=function(){const p=cp();const i=window._lcSel;if(i==null)return
 function aiLose(p){const ni=p.hand.findIndex(c=>c!=='joker');
   const c=ni>=0?p.hand.splice(ni,1)[0]:p.hand.shift();if(c!=='joker')G.cdisc.push(c);log(G,`${p.n} oddaje kartę.`,'bad');}
 
-// ── Trade ─────────────────────────────────────────────────────
+// ── Trade ───────────────────────────────────────────────────────────
 async function doTrade(p){
   const others=G.players.filter(x=>x.id!==p.id&&x.hand.length>0);
   window._tpSel=null;window._tmSel=null;
@@ -1325,7 +1329,7 @@ function aiTrade(p){const others=G.players.filter(x=>x.id!==p.id&&x.hand.length>
   const mc=p.hand.splice(ni,1)[0];const ti=0|Math.random()*t.hand.length;const tc=t.hand.splice(ti,1)[0];
   p.hand.push(tc);t.hand.push(mc);clamp(G,p);clamp(G,t);log(G,`${p.n} wymienia z ${t.n}.`,'good');}
 
-// ── Gift ─────────────────────────────────────────────────────
+// ── Gift ─────────────────────────────────────────────────────────────
 async function doGift(p){
   const others=G.players.filter(x=>x.id!==p.id&&x.hand.length>0);
   window._gpSel=null;
@@ -1371,7 +1375,7 @@ function aiGift(p){const others=G.players.filter(x=>x.id!==p.id&&x.hand.length>0
   const t=others[0];if(Math.random()<.65){const i=0|Math.random()*t.hand.length;const c=t.hand.splice(i,1)[0];p.hand.push(c);clamp(G,p);log(G,`${t.n} daje kartę ${p.n}.`,'good');}
   else log(G,`${t.n} odmawia.`,'');}
 
-// ═══ ADOPT ══════════════════════════════════════════════════════
+// ═══ ADOPT ════════════════════════════════════════════════════════════════
 async function openAdopt(){
   if(!G||G.phase!=='acted')return;const p=cp();
   if(p.noAdopt){toast('🔧 Remont — brak adopcji!','bad');return;}
@@ -1580,7 +1584,7 @@ const shelterStyle=document.createElement('style');
 shelterStyle.textContent=`.shelter-animal{transition:opacity .15s}.shelter-animal:hover rect{stroke:#5BAD72!important;stroke-width:2.5!important}`;
 document.head.appendChild(shelterStyle);
 
-// ═══ CARD INFO POPUP ════════════════════════════════════════════
+// ═══ CARD INFO POPUP ═════════════════════════════════════════════
 // Opisy dla każdego Warunku — co daje i dla jakich zwierząt
 const COND_INFO={
   ogrod:{icon:'🌳',name:'Ogród / Podwórko',desc:'Przestrzeń na zewnątrz — zwierzę może biegać i wąchać świat.',for:'Pies duży 🐕, Królik 🐇'},
@@ -1659,7 +1663,7 @@ window.showCardInfo=async function(cardKey,cardIdx){
   }
 };
 
-// ═══ RULES MODAL ════════════════════════════════════════════════
+// ═══ RULES MODAL ═══════════════════════════════════════════════════
 window.showRules=async function(){
   await showModal(`
     <div style="max-height:70vh;overflow-y:auto;padding-right:4px">
@@ -1789,7 +1793,7 @@ function endGame(){
   srt.forEach((_,i)=>setTimeout(()=>{const el=document.getElementById(`er-${i}`);if(el)el.classList.add('vis');},200+i*160));
 }
 
-// ═══ MODAL ══════════════════════════════════════════════════════
+// ═══ MODAL ═══════════════════════════════════════════════════
 let _mR=null;
 function showModal(html){return new Promise(res=>{_mR=res;document.getElementById('modal').innerHTML=html;document.getElementById('overlay').classList.add('open');});}
 function closeModal(r){
@@ -1845,9 +1849,9 @@ document.getElementById('roll-btn').addEventListener('click',rollDice);
 document.getElementById('adopt-btn').addEventListener('click',openAdopt);
 document.getElementById('end-btn').addEventListener('click',endTurn);
 
-// ═══════════════════════════════════════════════════════════════
+// ═════════════════════════════════════════════════════════════════════════
 // MULTIPLAYER — Ably WebSocket sync
-// ═══════════════════════════════════════════════════════════════
+// ═════════════════════════════════════════════════════════════════════════
 let ABLY=null, CHANNEL=null, MY_ROLE=null, MY_IDX=null, ROOM_CODE=null;
 // MY_ROLE: 'host' | 'guest'
 // MY_IDX: indeks gracza który JA kontroluję (0=host, 1=guest)
@@ -1874,7 +1878,7 @@ async function connectAbly(){
   });
 }
 
-// ── HOST ──────────────────────────────────────────────────────
+// ── HOST ──────────────────────────────────────────────────────────────
 async function hostCreateRoom(){
   const name=document.getElementById('host-name').value.trim()||'Host';
   try{
@@ -1918,7 +1922,7 @@ async function hostStartGame(){
   seededNewGame(players, seed);
 }
 
-// ── GUEST ─────────────────────────────────────────────────────
+// ── GUEST ────────────────────────────────────────────────────
 async function joinRoom(){
   const name=document.getElementById('join-name').value.trim()||'Gość';
   const code=document.getElementById('join-code').value.trim();
@@ -1955,7 +1959,7 @@ async function joinRoom(){
   }
 }
 
-// ── SEED-BASED GAME START ─────────────────────────────────────
+// ── SEED-BASED GAME START ───────────────────────────────────────
 // Żeby obaj gracze mieli identyczny stan gry (te same decks)
 // używamy seedowanego RNG — Mulberry32
 function mulberry32(seed){
@@ -1990,7 +1994,7 @@ function seededNewGame(playerDefs, seed){
   if(MY_IDX!==0) log(G,`Jesteś graczem #${MY_IDX+1} — ${playerDefs[MY_IDX].name}`,'hl');
 }
 
-// ── WYSYŁANIE AKCJI ───────────────────────────────────────────
+// ── WYSYŁANIE AKCJI ─────────────────────────────────────────────
 // Każda akcja gracza (rzut, zakończenie tury, adopcja)
 // jest wysyłana do kanału. Drugi gracz ją odbiera i wykonuje.
 async function publishAction(type, data={}){
@@ -2000,7 +2004,7 @@ async function publishAction(type, data={}){
   }catch(e){console.error('Ably publish error:',e);}
 }
 
-// ── ODBIÓR AKCJI ─────────────────────────────────────────────
+// ── ODBIÓR AKCJI ────────────────────────────────────────────────
 function onRemoteAction(msg){
   const{type,data,from}=msg.data;
   if(from===MY_IDX)return; // własna akcja — ignoruj (lokalnie już wykonana)
@@ -2023,8 +2027,41 @@ function handleRemoteAction(type,data){
         movePlayer(p,data.val);
       }
       break;
+    case 'field-cards':
+      // Aktywny gracz dobrał karty z pola Dom/Bonus — zastosuj DOKŁADNIE te same
+      if(G.cur!==MY_IDX){
+        const p=G.players[G.cur];
+        const cards=data.cards||[];
+        // Dodaj te konkretne karty do ręki gracza (bez losowania z własnej talii)
+        for(const c of cards){p.hand.push(c);}
+        clamp(G,p);
+        // Usuń te karty z lokalnej talii żeby talie pozostały zsynchronizowane
+        for(const c of cards){const i=G.cdeck.lastIndexOf(c);if(i>=0)G.cdeck.splice(i,1);}
+        const label=data.field==='Bonus'?`🌐 ${p.n} — BONUS! +${cards.length} karty`:`🌐 ${p.n} dobiera kartę`;
+        log(G,label,'good');
+        renderSidebar();
+        // Pokaż obserwatorowi ten sam modal z kartami
+        if(cards.length>0){
+          showNewCardModal(p, cards, data.field).then(()=>{
+            G.phase='acted';updateButtons();updateHint();
+          });
+        } else {
+          G.phase='acted';updateButtons();updateHint();
+        }
+      }
+      break;
     case 'end-turn':
-      if(G.phase==='acted'&&G.cur!==MY_IDX)endTurn();
+      if(G.cur!==MY_IDX){
+        // Zamknij ewentualny otwarty modal (karta/quiz) u obserwatora
+        const ov=document.getElementById('overlay');
+        if(ov&&ov.classList.contains('open')){
+          window._pendingQuizPhase=false;
+          ov.classList.remove('open');
+          if(_mR){_mR('done');_mR=null;}
+        }
+        if(G.phase!=='acted')G.phase='acted';
+        endTurn();
+      }
       break;
     case 'adopt':
       // Drugi gracz adoptuje
@@ -2111,7 +2148,7 @@ function handleRemoteAction(type,data){
   }
 }
 
-// ── PATCH lokalnych funkcji dla trybu online ─────────────────
+// ── PATCH lokalnych funkcji dla trybu online ──────────────────
 // Zapamiętujemy oryginalne funkcje
 const _origRollDice=rollDice;
 const _origEndTurn=endTurn;
@@ -2168,9 +2205,8 @@ window.adoptConfirm=async function(){
 // (quiz-answer publish is now inside pickQuizOpt directly)
 
 // Blokuj przyciski akcji gdy nie twoja tura (tryb online)
-const _origUpdateButtons=updateButtons;
 function updateButtons(){
-  _origUpdateButtons();
+  _baseUpdateButtons();
   if(!G||!G._online)return;
   const isMyTurn=G.cur===MY_IDX;
   document.getElementById('roll-btn').disabled=!isMyTurn||G.phase!=='roll';
